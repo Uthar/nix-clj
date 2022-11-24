@@ -1,4 +1,4 @@
-{ buildClojureLibrary, fetchFromGitHub, ... }:
+{ buildClojureLibrary, fetchFromGitHub, fetchMavenArtifact, ... }:
 
 rec {
 
@@ -293,7 +293,7 @@ rec {
 
   brewInstall = buildClojureLibrary {
     pname = "exec";
-    version = clojure.version;
+    version = "1.11.1.1200";
     src = fetchFromGitHub {
       owner = "clojure";
       repo = "brew-install";
@@ -327,7 +327,7 @@ rec {
       rev = "v0.28.7";
       hash = "sha256-4hAhBPBFbCRXzeJFVBy5wIIZqOSqtrMTdrrHVpJSW2I=";
     };
-    path = "src:resources"
+    path = "src:resources";
     ns = [ "cider.nrepl" ];
   };
 

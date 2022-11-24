@@ -6,11 +6,12 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         devpkgs = dev.packages.${system};
+        lib = nixpkgs.lib;
         clojurePackages = pkgs.callPackage ./nix-clj.nix {
           inherit (devpkgs) clojure jdk;
         };
       in
       {
-        packages = { inherit (clojurePackages) farolero macrovich; };
+        packages = lib.filterAttrs (n: v: lib.isDerivation v) clojurePackages;
       });
 }
