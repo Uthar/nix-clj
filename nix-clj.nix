@@ -20,9 +20,9 @@ let
     
     buildPhase = ''
       mkdir classes
-      export CLASSPATH=$CLASSPATH:${clojure}/clojure-1.11.1.jar:${src}/${path}
+      export CLASSPATH=$CLASSPATH:${clojure}/clojure-1.11.1.jar:${src}/${path}:classes
       find -name '*.java' > sources.txt
-      javac @sources.txt || true
+      javac -d classes @sources.txt || true
       java clojure.main -e "(doseq [ns '(${toString ns})] (compile ns))"
     '';    
 
