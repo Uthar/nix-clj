@@ -1,4 +1,4 @@
-{ stdenvNoCC, callPackage, jdk, clojure, ...}:
+{ stdenvNoCC, callPackage, makeBinaryWrapper, jdk, clojure, ...}:
 
 let
   
@@ -21,8 +21,6 @@ let
     buildPhase = ''
       mkdir classes
       export CLASSPATH=$CLASSPATH:${clojure}/clojure-1.11.1.jar:${src}/${path}
-      echo $CLASSPATH
-      echo $clojure
       find -name '*.java' > sources.txt
       javac @sources.txt || true
       java clojure.main -e "(doseq [ns '(${toString ns})] (compile ns))"
@@ -34,7 +32,24 @@ let
     '';
   } // args);
 
+  clojureWithPackages = selectPackages: stdenvNoCC.mkDerivation {
+    pname = "clojure";
+    version = "with-packages";
+    dontUnpack = true;
+    buildInputs = [ makeBinaryWrapper ];
+    propagatedBuildInputs = selectPackages packages;
+    installPhase = ''
+      makeWrapper ${jdk}/bin/java $out/bin/clojure \
+        --add-flags clojure.main \
+        --prefix CLASSPATH : "$CLASSPATH" \
+        --prefix CLASSPATH : "${clojure}/clojure-1.11.1.jar"
+    '';
+  };
+
   packages = callPackage ./packages.nix { inherit buildClojureLibrary; };
 
-in packages
+in {
+  inherit packages;
+  inherit clojureWithPackages;
+}
 
