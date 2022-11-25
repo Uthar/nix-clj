@@ -2,41 +2,42 @@
 
 rec {
 
-  # malli = buildClojureLibrary {
-  #   pname = "malli";
-  #   version = "0.9.2";
-  #   src = fetchFromGitHub {
-  #     owner = "metosin";
-  #     repo = "malli";
-  #     rev = "0.9.2";
-  #     hash = "";
-  #   };
-  #   deps = [ dynaload edamame ];
-  # };
+  malli = buildClojureLibrary {
+    pname = "malli";
+    version = "0.9.2";
+    src = fetchFromGitHub {
+      owner = "metosin";
+      repo = "malli";
+      rev = "0.9.2";
+      hash = "sha256-ZRSRAooRNvhmgX3J0noZItmF9MHazk8ONiftT5qS3zE";
+    };
+    deps = [ dynaload edamame ];
+  };
 
-  # dynaload = buildClojureLibrary {
-  #   pname = "dynaload";
-  #   version = "0.3.5";
-  #   src = fetchFromGitHub {
-  #     owner = "borkdude";
-  #     repo = "dynaload";
-  #     rev = "v0.3.5";
-  #     hash = "";
-  #   };
-  # };
+  dynaload = buildClojureLibrary {
+    pname = "dynaload";
+    version = "0.3.5";
+    src = fetchFromGitHub {
+      owner = "borkdude";
+      repo = "dynaload";
+      rev = "v0.3.5";
+      hash = "sha256-fYTtUWh7/biLCMeGYhKObScvRPW5bX335HLjsfy87kw";
+    };
+    ns = [ "borkdude.dynaload" ];
+  };
 
-  # edamame = buildClojureLibrary {
-  #   pname = "edamame";
-  #   version = "1.0.16";
-  #   src = fetchFromGitHub {
-  #     owner = "borkdude";
-  #     repo = "edamame";
-  #     rev = "v1.0.16";
-  #     hash = "";
-  #   };
-  #   deps = [ toolsReader ];
-  # }
-  # ;
+  edamame = buildClojureLibrary {
+    pname = "edamame";
+    version = "1.0.16";
+    src = fetchFromGitHub {
+      owner = "borkdude";
+      repo = "edamame";
+      rev = "v1.0.16";
+      hash = "sha256-KRWQoIp//IZqzNRzke7yHGl9oRv5kY8ZMGSxKHONGr0=";
+    };
+    deps = [ toolsReader ];
+  }
+  ;
   
   farolero = buildClojureLibrary {
     pname = "farolero";
@@ -112,7 +113,10 @@ rec {
       hash = "sha256-SICGhCl9bMIQ5b6GBlGpHvNLLdzSPNSUeOVrTwTAmGU=";
     };
     path = "src/main/clojure";
-    ns = [ "clojure.tools.reader" ];
+    ns = [
+      "clojure.tools.reader"
+      "clojure.tools.reader.edn"
+    ];
   };
 
   toolsAnalyzer = buildClojureLibrary rec {
