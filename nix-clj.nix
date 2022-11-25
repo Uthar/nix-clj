@@ -48,8 +48,8 @@ let
 
   packages = callPackage ./packages.nix { inherit buildClojureLibrary; };
 
-in {
-  inherit packages;
-  inherit clojureWithPackages;
+in clojure // {
+  pkgs = packages;
+  withPackages = clojureWithPackages;
 }
 

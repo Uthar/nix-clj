@@ -2,6 +2,42 @@
 
 rec {
 
+  # malli = buildClojureLibrary {
+  #   pname = "malli";
+  #   version = "0.9.2";
+  #   src = fetchFromGitHub {
+  #     owner = "metosin";
+  #     repo = "malli";
+  #     rev = "0.9.2";
+  #     hash = "";
+  #   };
+  #   deps = [ dynaload edamame ];
+  # };
+
+  # dynaload = buildClojureLibrary {
+  #   pname = "dynaload";
+  #   version = "0.3.5";
+  #   src = fetchFromGitHub {
+  #     owner = "borkdude";
+  #     repo = "dynaload";
+  #     rev = "v0.3.5";
+  #     hash = "";
+  #   };
+  # };
+
+  # edamame = buildClojureLibrary {
+  #   pname = "edamame";
+  #   version = "1.0.16";
+  #   src = fetchFromGitHub {
+  #     owner = "borkdude";
+  #     repo = "edamame";
+  #     rev = "v1.0.16";
+  #     hash = "";
+  #   };
+  #   deps = [ toolsReader ];
+  # }
+  # ;
+  
   farolero = buildClojureLibrary {
     pname = "farolero";
     version = "1.4.4";

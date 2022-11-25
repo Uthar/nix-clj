@@ -10,8 +10,11 @@
         clojurePackages = pkgs.callPackage ./nix-clj.nix {
           inherit (devpkgs) clojure jdk;
         };
-      in
-      {
-        packages = lib.filterAttrs (n: v: lib.isDerivation v) clojurePackages;
+      in {
+        
+        packages.clojure = pkgs.callPackage ./nix-clj.nix {
+          inherit (devpkgs) clojure jdk;
+        };
+        
       });
 }
