@@ -11,3 +11,6 @@ Make docker:
      cwp+docker malli farolero toolsNamespace
      docker load < clojure-with-packages.tar.gz
      docker run -ti clojure-with-packages clojure
+
+License:
+     GPL version 3 or later
