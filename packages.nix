@@ -547,6 +547,7 @@ rec {
       rev = "v0.28.7";
       hash = "sha256-4hAhBPBFbCRXzeJFVBy5wIIZqOSqtrMTdrrHVpJSW2I=";
     };
+    patches = [ ./nrepl-version.patch ];
     path = "src:resources";
     ns = [
       "cider.nrepl"

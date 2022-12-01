@@ -1,0 +1,15 @@
+--- a/src/cider/nrepl/version.clj
++++ b/src/cider/nrepl/version.clj
+@@ -4,9 +4,7 @@
+ 
+ (def version-string
+   "The current version for cider-nrepl as a string."
+-  (-> (io/resource "cider/nrepl/version.edn")
+-      slurp
+-      read-string))
++  "0.28.7")
+ 
+ (assert (seq version-string))
+ 
+
+Diff finished.  Thu Dec  1 23:44:49 2022

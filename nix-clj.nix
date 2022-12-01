@@ -1,4 +1,4 @@
-{ stdenvNoCC, callPackage, makeBinaryWrapper, jdk, clojure, ...}:
+{ stdenvNoCC, callPackage, makeBinaryWrapper, applyPatches, jdk, clojure, ...}:
 
 let
   
@@ -13,14 +13,18 @@ let
     , ...
   }@args : stdenvNoCC.mkDerivation (rec {
     
-    inherit pname version src patches;
+    inherit pname version;
 
     nativeBuildInputs = [ jdk clojure ];
     propagatedBuildInputs = [ jdk clojure ] ++ deps;
     
-    buildPhase = ''
+    buildPhase = let
+      src' = if builtins.length patches > 0
+             then applyPatches { inherit src patches; }
+             else src;
+    in ''
       mkdir classes
-      export CLASSPATH=$CLASSPATH:${clojure}/clojure-1.11.1.jar:${src}/${path}:classes
+      export CLASSPATH=$CLASSPATH:${clojure}/clojure-1.11.1.jar:${src'}/${path}:classes
       find -name '*.java' > sources.txt
       javac -d classes @sources.txt || true
       java clojure.main -e "(doseq [ns '(${toString ns})] (compile ns))"
