@@ -214,7 +214,15 @@ rec {
       hash = "sha256-vsUEFuXYrfhruhfEyBHQmYaEV1lSzjFzvdHizgp8IWw=";
     };
     path = "src/main/clojure";
-    ns = [ "clojure.tools.namespace" ];
+    ns = [
+      "clojure.tools.namespace"
+      "clojure.tools.namespace.dir"
+      "clojure.tools.namespace.reload"
+    ];
+    deps = [
+      toolsReader
+      javaClasspath
+    ];
   };
 
   dataXml = buildClojureLibrary rec {
@@ -358,6 +366,178 @@ rec {
     ns = [ "nrepl.cmdline" ];
   };
 
+   arrangement = buildClojureLibrary {
+    pname = "arrangement";
+    version = "2.1.0";
+    src = fetchFromGitHub {
+      owner = "greglook";
+      repo = "clj-arrangement";
+      rev = "2.1.0";
+      hash = "sha256-0dESCSK5o7dyj8TMDvRom5UCccu85Pe9FoWubK7QXBE";
+    };
+   };
+
+   profile = buildClojureLibrary {
+    pname = "profile";
+    version = "trunk";
+    src = fetchFromGitHub {
+      owner = "thunknyc";
+      repo = "profile";
+      rev = "d133364d491739642d469b47693cb5778bd85d21";
+      hash = "sha256-rFIENuTyg3qTlVQLqphh6GMjEVZicyK372GU7S0TZhU";
+    };
+   };
+
+   cljfmt = buildClojureLibrary {
+    pname = "cljfmt";
+    version = "0.9.0";
+    src = fetchFromGitHub {
+      owner = "weavejester";
+      repo = "cljfmt";
+      rev = "0.9.0";
+      hash = "sha256-Tyt9G+vDx7yy390J8Zyh/RCTMMqGRALv61ItsPcUyBo";
+    };
+    path = "cljfmt/src:cljfmt/resources";
+    deps = [
+      rewriteClj
+    ];
+   };
+
+   coreRRBVector = buildClojureLibrary {
+    pname = "core.rrb-vector";
+    version = "0.1.2";
+    src = fetchFromGitHub {
+      owner = "clojure";
+      repo = "core.rrb-vector";
+      rev = "core.rrb-vector-0.1.2";
+      hash = "sha256-gZgApi7lqNL4q8+U494ko50+aUV7KZh0t1BWfK0k4rg";
+    };
+    path = "src/main/clojure";
+    ns = [ "clojure.core.rrb-vector" ];
+   };
+
+   compliment = buildClojureLibrary {
+    pname = "compliment";
+    version = "0.3.14";
+    src = fetchFromGitHub {
+      owner = "alexander-yakushev";
+      repo = "compliment";
+      rev = "0.3.14";
+      hash = "sha256-IhwfJtGGKPC+5R2nXW6mYCs0UsVBHSxRV2oUt+Rv8dU";
+    };
+    ns = [
+      "compliment.core"
+    ];
+   };
+
+   fipp  = buildClojureLibrary {
+    pname = "fipp";
+    version = "0.6.21";
+    src = fetchFromGitHub {
+      owner = "brandonbloom";
+      repo = "fipp";
+      rev = "v0.6.21";
+      hash = "sha256-UTs8ufSgpdU3ojliWnwcfRvkT49hZoiZjmY67h7PoII";
+    };
+    ns = [ "fipp.clojure" ];
+    deps = [
+      coreRRBVector
+    ];
+   };
+
+   orchard = buildClojureLibrary {
+    pname = "orchard";
+    version = "0.11.0";
+    src = fetchFromGitHub {
+      owner = "clojure-emacs";
+      repo = "orchard";
+      rev = "v0.11.0";
+      hash = "sha256-M+ohYLYM8kc27csWg+yYqQO89F/xghA4vAEnKyMbMFY";
+    };
+    path = "src:src-newer-jdks";
+    ns = [
+      "orchard.java"
+      "orchard.apropos"
+      "orchard.inspect"
+      "orchard.info"
+      "orchard.eldoc"
+      "orchard.xref"
+    ];
+   };
+
+   puget = buildClojureLibrary {
+    pname = "puget";
+    version = "1.3.4";
+    src = fetchFromGitHub {
+      owner = "greglook";
+      repo = "puget";
+      rev = "1.3.4";
+      hash = "sha256-nFFTDUslaxWKYoyKdecIRWZbpY4HDzNnsZ0Pa7nKQHs";
+    };
+    ns = [
+      "puget.printer"
+      "puget.color"
+      "puget.dispatch"
+    ];
+    deps = [
+      fipp
+      arrangement
+    ];
+   };
+
+   rewriteClj = buildClojureLibrary {
+    pname = "rewrite-clj";
+    version = "1.1.45";
+    src = fetchFromGitHub {
+      owner = "clj-commons";
+      repo = "rewrite-clj";
+      rev = "v1.1.45";
+      hash = "sha256-N7+8f1KnNSD3fhZC+LlZXtVqwf3gcwEtbZP5xUr50fk";
+    };
+    ns = [
+      "rewrite-clj"
+      "rewrite-clj.node"
+      "rewrite-clj.parser"
+      "rewrite-clj.zip"
+    ];
+    deps = [
+      toolsReader
+    ];
+   };
+
+   suitable = buildClojureLibrary {
+    pname = "suitable";
+    version = "0.4.0";
+    src = fetchFromGitHub {
+      owner = "clojure-emacs";
+      repo = "clj-suitable";
+      rev = "0.4.0";
+      hash = "sha256-27OzlcAb0msoflHPA0avEKYleebNt4OWnSeGS1AJSiY";
+    };
+    path = "src/main";
+    ns = [
+      "suitable.middleware"
+      "suitable.compliment.sources.cljs"
+    ];
+    deps = [
+      nrepl
+      compliment
+    ]; 
+   };
+
+   toolsTrace = buildClojureLibrary {
+    pname = "tools.trace";
+    version = "0.7.11";
+    src = fetchFromGitHub {
+      owner = "clojure";
+      repo = "tools.trace";
+      rev = "tools.trace-0.7.11";
+      hash = "sha256-l0IkmMvdTTWAPMkoe04jtv2ZWla/1EOB56Nztl2t1Qk";
+    };
+    path = "src/main/clojure";
+    ns = [ "clojure.tools.trace" ];
+   };
+   
   ciderNrepl = buildClojureLibrary {
     pname = "cider-nrepl";
     version = "0.28.7";
@@ -368,7 +548,57 @@ rec {
       hash = "sha256-4hAhBPBFbCRXzeJFVBy5wIIZqOSqtrMTdrrHVpJSW2I=";
     };
     path = "src:resources";
-    ns = [ "cider.nrepl" ];
+    ns = [
+      "cider.nrepl"
+      "cider.nrepl.pprint"
+      "cider.nrepl.print-method"
+      "cider.nrepl.version"
+      "cider.nrepl.middleware"
+      "cider.nrepl.middleware"
+      "cider.nrepl.middleware.apropos"
+      "cider.nrepl.middleware.classpath"
+      "cider.nrepl.middleware.clojuredocs"
+      "cider.nrepl.middleware.complete"
+      "cider.nrepl.middleware.content-type"
+      "cider.nrepl.middleware.debug"
+      "cider.nrepl.middleware.enlighten"
+      "cider.nrepl.middleware.format"
+      "cider.nrepl.middleware.info"
+      "cider.nrepl.middleware.inspect"
+      "cider.nrepl.middleware.macroexpand"
+      "cider.nrepl.middleware.ns"
+      "cider.nrepl.middleware.out"
+      "cider.nrepl.middleware.profile"
+      "cider.nrepl.middleware.refresh"
+      "cider.nrepl.middleware.resource"
+      "cider.nrepl.middleware.slurp"
+      "cider.nrepl.middleware.spec"
+      "cider.nrepl.middleware.stacktrace"
+      "cider.nrepl.middleware.test"
+      "cider.nrepl.middleware.trace"
+      "cider.nrepl.middleware.track-state"
+      "cider.nrepl.middleware.undef"
+      "cider.nrepl.middleware.util"
+      "cider.nrepl.middleware.version"
+      "cider.nrepl.middleware.xref"
+    ];
+    deps = [
+      arrangement
+      cljfmt
+      coreRRBVector
+      compliment
+      fipp
+      javaClasspath
+      orchard
+      profile
+      puget
+      rewriteClj
+      suitable
+      toolsCli
+      toolsNamespace
+      toolsReader
+      toolsTrace
+    ];
   };
 
 }
