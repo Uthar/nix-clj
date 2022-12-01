@@ -1,3 +1,5 @@
+☢⚠☣ EXPERIMENTAL ☣⚠☢
+
 Build library:
       nix build .#clojure.pkgs.malli
 
