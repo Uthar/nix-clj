@@ -59,13 +59,13 @@ let
     dontUnpack = true;
     dontBuild = true;
     installPhase = ''
-      mkdir -p $out
-      jars=$(echo $CLASSPATH | sed 's,:, ,g')
+      mkdir -p $out/share/java
       mkdir classes
+      jars=$(echo $CLASSPATH | sed 's,:, ,g')
       for jar in $jars; do
         (cd classes; jar -xf $jar)
       done
-      (cd classes; jar -cf $out/$name.jar *)
+      (cd classes; jar -cf $out/share/java/$name.jar *)
     '';
   };
 
