@@ -52,8 +52,29 @@ let
 
   packages = callPackage ./packages.nix { inherit buildClojureLibrary; };
 
+  buildUberjar = cljpkgs: stdenvNoCC.mkDerivation {
+    pname = "uberjar";
+    version = "uberjar";
+    propagatedBuildInputs = cljpkgs;
+    dontUnpack = true;
+    dontBuild = true;
+    installPhase = ''
+      mkdir -p $out
+      jars=$(echo $CLASSPATH | sed 's,:, ,g')
+      mkdir classes
+      for jar in $jars; do
+        (cd classes; jar -xf $jar)
+      done
+      (cd classes; jar -cf $out/$name.jar *)
+    '';
+  };
+
 in clojure // {
   pkgs = packages;
   withPackages = clojureWithPackages;
+  inherit
+    buildClojureLibrary
+    buildUberjar
+  ;
 }
 
