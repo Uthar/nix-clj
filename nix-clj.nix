@@ -52,8 +52,8 @@ let
 
   packages = callPackage ./packages.nix { inherit buildClojureLibrary; };
 
-  buildUberjar = cljpkgs: stdenvNoCC.mkDerivation {
-    pname = "uberjar";
+  buildUberjar = pname: cljpkgs: stdenvNoCC.mkDerivation {
+    inherit pname;
     version = "uberjar";
     propagatedBuildInputs = cljpkgs;
     dontUnpack = true;
