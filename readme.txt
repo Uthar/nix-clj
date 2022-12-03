@@ -14,5 +14,10 @@ Make docker:
      docker load < clojure-with-packages.tar.gz
      docker run -ti clojure-with-packages clojure
 
+Make uberjar:
+     source cwp.bash
+     cwp+uberjar foo malli farolero toolsNamespace
+     jar -tf result/share/java/foo-uberjar.jar
+
 License:
      GPL version 3 or later
