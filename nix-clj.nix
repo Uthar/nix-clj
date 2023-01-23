@@ -24,7 +24,7 @@ let
              else src;
     in ''
       mkdir classes
-      export CLASSPATH=$CLASSPATH:${clojure}/clojure-1.11.1.jar:${src'}/${path}:classes
+      export CLASSPATH=$CLASSPATH:${src'}/${path}:classes
       find -name '*.java' > sources.txt
       javac -d classes @sources.txt || true
       java clojure.main -e "(doseq [ns '(${toString ns})] (compile ns))"
@@ -45,8 +45,7 @@ let
     installPhase = ''
       makeWrapper ${jdk}/bin/java $out/bin/clojure \
         --add-flags clojure.main \
-        --prefix CLASSPATH : "$CLASSPATH" \
-        --prefix CLASSPATH : "${clojure}/clojure-1.11.1.jar"
+        --prefix CLASSPATH : "$CLASSPATH"
     '';
   };
 
