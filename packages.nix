@@ -36,8 +36,7 @@ rec {
       hash = "sha256-KRWQoIp//IZqzNRzke7yHGl9oRv5kY8ZMGSxKHONGr0=";
     };
     deps = [ toolsReader ];
-  }
-  ;
+  };
   
   farolero = buildClojureLibrary {
     pname = "farolero";
@@ -387,7 +386,14 @@ rec {
       hash = "sha256-rFIENuTyg3qTlVQLqphh6GMjEVZicyK372GU7S0TZhU";
     };
    };
-
+   
+  java-diff-utils = fetchMavenArtifact {
+    groupId = "com.googlecode.java-diff-utils";
+    artifactId = "diffutils";
+    version = "1.3.0";
+    hash = "sha256-YbpNxJrcqVJDvqoFaa3CojrttSkq54qgEYb6eC69xcI=";
+  };
+   
    cljfmt = buildClojureLibrary {
     pname = "cljfmt";
     version = "0.9.0";
@@ -400,7 +406,10 @@ rec {
     path = "cljfmt/src:cljfmt/resources";
     deps = [
       rewriteClj
+      toolsCli
+      java-diff-utils
     ];
+    ns = [ "cljfmt.core" "cljfmt.main" ];
    };
 
    coreRRBVector = buildClojureLibrary {
