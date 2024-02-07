@@ -186,7 +186,8 @@ rec {
       awsApi
     ];
   };
- 
+
+  # TODO: Really want to build these things from source...
   jars = map fetchMavenArtifact (builtins.fromJSON (builtins.readFile ./jars.json));
 
   toolsBuild = buildClojureLibrary rec {
