@@ -1,5 +1,8 @@
 ☢⚠☣ EXPERIMENTAL ☣⚠☢
 
+These are tools for building Clojure libraries in a recreatable and traceable
+way - straight from the sources - using the Nix build frameworks.
+
 Build library:
       nix build .#clojure.pkgs.malli
 
