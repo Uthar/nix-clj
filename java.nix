@@ -30,14 +30,18 @@ let
   aetherVersion = "1.13.1"; # NOTE: newer than in pom.xml
   slf4jVersion = "1.7.5";
 
-  buildJar = { pname, version, src, dependencies ? [] }: stdenvNoCC.mkDerivation {
+  buildJar = {
+    pname, version, src
+    , dependencies ? []
+    , paths ? ["src/main/java"]
+  }: stdenvNoCC.mkDerivation {
     inherit pname version src;
     nativeBuildInputs = [ jdk ] ++ dependencies;
     buildPhase = ''
-      javac -d classes $(find src/main -name '*.java')
+      javac -d classes $(find ${lib.concatStringsSep " " paths} -type f -name '*.java')
     '';
     installPhase = ''
-      cd classes; jar cf $out/share/java/${pname}-${version}.jar *
+      jar --date=1980-01-01T00:00:02Z --create --file $out/share/java/${pname}-${version}.jar -C classes .
     '';
   };
 
@@ -134,6 +138,16 @@ let
       hash = "sha256-zIAOq363FTLcLw4WJ90nXNsikavVXKGHVskS+TzH1o4=";
     };
   };
+
+  # Guava
+  jsr-305 = buildJar rec {
+    pname = "jsr-305";
+    version = "1.3.9";
+    src = fetchzip {
+      url = "mirror://maven/com/google/code/findbugs/jsr305/${version}/jsr305-${version}-sources.jar";
+      hash = "";
+    };
+  };
   
   guava = buildJar {
     pname = "guava";
@@ -144,6 +158,7 @@ let
       rev = "v${guavaVersion}";
       hash = "sha256-OhqOObLNz7bKZXh7usZ9Jlo34BJVEviv/xaQyGhY4Hw=";
     };
+    paths = [ "guava" ];
   };
   
   guice = buildJar {
