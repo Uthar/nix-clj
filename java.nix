@@ -144,6 +144,7 @@ let
     pname = "jsr-305";
     version = "1.3.9";
     src = fetchzip {
+      # TODO there is a -src artifact on central
       url = "mirror://maven/com/google/code/findbugs/jsr305/${version}/jsr305-${version}-sources.jar";
       hash = "";
     };
