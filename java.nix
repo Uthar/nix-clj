@@ -1,6 +1,8 @@
-{ stdenvNoCC, lib, pkgs, fetchFromGitHub, jdk, ant, ... }:
+{ stdenvNoCC, lib, pkgs, fetchFromGitHub, fetchzip, jdk, ant, ... }:
 
 # TODO: maven is not bootstrapped in Nixpkgs - but it is in Guix - copy them.
+
+# TODO: Java is also not bootstrapped. Can bootstrap with jikes/gnu classpath...
 
 let
 
@@ -541,6 +543,9 @@ let
       touch $MAVEN_REPOSITORY/org/apache/maven/plugins/maven-resources-plugin/3.3.0/maven-resources-plugin-3.3.0.pom
     '';
 
+    # Fails due to missing plugins/mojos
+    # Do they come with maven when bootstrapped? (Nix has a binary version)
+    # Or are they in separate projects?
     buildPhase = ''
       mvn --offline -Dmaven.repo.local=$MAVEN_REPOSITORY ${goal} -DskipTests=true;
     '';
