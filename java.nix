@@ -360,7 +360,7 @@ let
 
   };
 
-  #### End
+  #### End Maven 3.3.9 Bootstrap
 
   plexus-interpolation = stdenvNoCC.mkDerivation rec {
     pname = "plexus-interpolation";
