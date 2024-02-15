@@ -36,13 +36,15 @@ let
     pname, version, src
     , dependencies ? []
     , paths ? ["src/main/java"]
+    , ...
   }: stdenvNoCC.mkDerivation {
     inherit pname version src;
     nativeBuildInputs = [ jdk ] ++ dependencies;
     buildPhase = ''
-      javac -d classes $(find ${lib.concatStringsSep " " paths} -type f -name '*.java')
+      javac -encoding utf-8 -d classes $(find ${lib.concatStringsSep " " paths} -type f -name '*.java')
     '';
     installPhase = ''
+      mkdir -p $out/share/java
       jar --date=1980-01-01T00:00:02Z --create --file $out/share/java/${pname}-${version}.jar -C classes .
     '';
   };
@@ -520,6 +522,78 @@ let
     '';
   };
 
+  buildMavenArtifact = args@{pname, version, pom ? "pom.xml", ...}: (buildJar args).overrideAttrs (oa: {
+    installPhase = oa.installPhase + ''
+      jar --date=1980-01-01T00:00:02Z --update --file $out/share/java/${pname}-${version}.jar ${pom}
+    '';
+  });
+
+  # Package the plugins, one by one...
+
+  # OK, so in order to build the maven plugins, you first need maven itself (for
+  # its libraries).
+
+  in rec {
+
+  # Unpack it from the binary, until it is bootstrapped...
+  mavenLibs = pkgs.runCommand "maven-libs" { inherit (pkgs) maven; } ''
+    mkdir -p $out/share/java
+    find $maven -type f -name '*.jar' -exec cp {} $out/share/java \;
+  '';
+
+  maven-plugin-tools-version = "3.11.0";
+
+  maven-plugin-tools = fetchFromGitHub {
+    owner = "apache";
+    repo = "maven-plugin-tools";
+    rev = "maven-plugin-tools-${maven-plugin-tools-version}";
+    hash = "sha256-PHjFByRUkHLPIKc1kPOb2s2x5VXHcQ+4sT8YP55y6WQ=";
+  };
+  
+  maven-plugin-annotations = buildMavenArtifact rec {
+    pname = "maven-plugin-annotations";
+    version = maven-plugin-tools-version;
+    src = maven-plugin-tools;
+    paths = [ "maven-plugin-annotations/src/main/java" ];
+    pom = "maven-plugin-annotations/pom.xml";
+  };
+
+  maven-filtering = buildMavenArtifact rec {
+    pname = "maven-filtering";
+    version = "3.3.1";
+    dependencies = [ mavenLibs ];
+    src = fetchFromGitHub {
+      owner = "apache";
+      repo = "maven-filtering";
+      rev = "maven-filtering-${version}";
+      hash = "sha256-Wfi8g+a5e55UVyJjsRggUiK0NPNcE+UEWPcS1dMtZWM=";
+    };
+  };
+
+  plexus-build-api = buildMavenArtifact rec {
+    pname = "plexus-build-api";
+    version = "0.0.7";
+    dependencies = [ mavenLibs ]; # This will bite back when I bootstrap...
+    src = fetchFromGitHub {
+      owner = "sonatype";
+      repo = "sisu-build-api";
+      rev = "plexus-build-api-${version}";
+      hash = "sha256-QDHojfMpSKhfhfEhgszxFDCYe9gcnx1KA6PPhwozvLQ=";
+    };
+  };
+  
+  maven-resources-plugin = buildMavenArtifact rec { 
+    pname = "maven-resources-plugin";
+    version = "3.3.0";
+    dependencies = [ mavenLibs maven-plugin-annotations ];
+    src = fetchFromGitHub {
+      owner = "apache";
+      repo = "maven-resources-plugin";
+      rev = "maven-resources-plugin-${version}";
+      hash = "sha256-ld8uURjbVRCxAJcllD8B4yj4Lzd5ANQIbEvbprIM1Fw=";
+    };
+  };
+
   buildMavenProject = {
     pname
     , version
@@ -560,13 +634,16 @@ let
     
   };
   
-in rec {
 
-  inherit mavenDeps;
+
+  # inherit mavenDeps;
 
   allMavenDeps = pkgs.buildEnv { name = "jars"; paths = builtins.attrValues mavenDeps; };
 
   # inherit plexus-interpolation plexus-utils modello maven_3_3_9;
+
+  # inherit mavenLibs;
+  # inherit maven-resources-plugin;
 
   jfreechart = buildMavenProject {
     pname = "jfreechart";
