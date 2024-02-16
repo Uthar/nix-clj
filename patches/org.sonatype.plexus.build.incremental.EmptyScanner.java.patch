@@ -1,0 +1,14 @@
+--- a/src/main/java/org/sonatype/plexus/build/incremental/EmptyScanner.java
++++ b/src/main/java/org/sonatype/plexus/build/incremental/EmptyScanner.java
+@@ -50,6 +50,9 @@
+   public void setIncludes(String[] includes) {
+   }
+ 
++  public void setFilenameComparator(java.util.Comparator<String> comp) {
++  }
++
+   public File getBasedir() {
+     return basedir;
+   }
+
+Diff finished.  Sat Feb 17 00:27:00 2024

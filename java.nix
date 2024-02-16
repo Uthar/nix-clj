@@ -32,22 +32,23 @@ let
   aetherVersion = "1.13.1"; # NOTE: newer than in pom.xml
   slf4jVersion = "1.7.5";
 
-  buildJar = {
+  buildJar = args@{
     pname, version, src
     , dependencies ? []
     , paths ? ["src/main/java"]
+    , javacFlags ? "--release 8"
     , ...
-  }: stdenvNoCC.mkDerivation {
+  }: stdenvNoCC.mkDerivation ({
     inherit pname version src;
     nativeBuildInputs = [ jdk ] ++ dependencies;
     buildPhase = ''
-      javac -encoding utf-8 -d classes $(find ${lib.concatStringsSep " " paths} -type f -name '*.java')
+      javac ${javacFlags} -encoding utf-8 -d classes $(find ${lib.concatStringsSep " " paths} -type f -name '*.java')
     '';
     installPhase = ''
       mkdir -p $out/share/java
       jar --date=1980-01-01T00:00:02Z --create --file $out/share/java/${pname}-${version}.jar -C classes .
     '';
-  };
+  } // args);
 
   mavenDeps = rec {
 
@@ -541,15 +542,15 @@ let
     find $maven -type f -name '*.jar' -exec cp {} $out/share/java \;
   '';
 
-  maven-plugin-tools-version = "3.11.0";
+  maven-plugin-tools-version = "3.10.2";
 
   maven-plugin-tools = fetchFromGitHub {
     owner = "apache";
     repo = "maven-plugin-tools";
     rev = "maven-plugin-tools-${maven-plugin-tools-version}";
-    hash = "sha256-PHjFByRUkHLPIKc1kPOb2s2x5VXHcQ+4sT8YP55y6WQ=";
+    hash = "sha256-QsYuY+Cs8nHNBvbBYQSU7WMfgtH7MO4WSFrgEgkLmE4=";
   };
-  
+    
   maven-plugin-annotations = buildMavenArtifact rec {
     pname = "maven-plugin-annotations";
     version = maven-plugin-tools-version;
@@ -558,22 +559,69 @@ let
     pom = "maven-plugin-annotations/pom.xml";
   };
 
-  maven-filtering = buildMavenArtifact rec {
-    pname = "maven-filtering";
-    version = "3.3.1";
-    dependencies = [ mavenLibs ];
+  plexus-xml = buildMavenArtifact rec {
+    pname = "plexus-xml";
+    version = "3.0.0";
+    dependencies = [
+    ];
     src = fetchFromGitHub {
-      owner = "apache";
-      repo = "maven-filtering";
-      rev = "maven-filtering-${version}";
-      hash = "sha256-Wfi8g+a5e55UVyJjsRggUiK0NPNcE+UEWPcS1dMtZWM=";
+      owner = "codehaus-plexus";
+      repo = "plexus-xml";
+      rev = "plexus-xml-${version}";
+      hash = "sha256-swOntzNJYniHdoJi1fO83L2tpqwfHshpqd955mBWAJI=";
     };
+  };
+
+  classworlds = buildMavenArtifact rec {
+    pname = "classworlds";
+    version = "1.2-alpha-3";
+    src = fetchFromGitHub {
+      owner = "codehaus-plexus";
+      repo = "plexus-classworlds";
+      rev = "plexus-classworlds-${classWorldsVersion}";
+      hash = "sha256-eQSoYbyNZaRqt+YV4QLetZeDHV+33UPJgyLa5UrpaMc=";
+    };
+  };
+
+  # WOW! THIS IS OLD!
+  plexus-container-default = buildMavenArtifact rec {
+    pname = "plexus-container-default";
+    version = "1.0-alpha-9-stable-1@6237";
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # plexus-utils
+      mavenLibs
+
+      # junit # Really?
+      classworlds
+    ];
+    src = fetchFromGitHub {
+      owner = "codehaus-plexus";
+      repo = "plexus-containers";
+      rev = "plexus-container-default-${version}";
+      hash = "sha256-xOxueiVl3d1Eeq5xJzziOkDAxoglo3IwI7CxDKNzdcI=";
+    };
+    patches = [
+      ./patches/org.codehaus.plexus.embed.Embedder.java.patch
+    ];
+    postPatch = ''
+     rm -v src/main/java/org/codehaus/plexus/PlexusTestCase.java
+    '';
   };
 
   plexus-build-api = buildMavenArtifact rec {
     pname = "plexus-build-api";
     version = "0.0.7";
-    dependencies = [ mavenLibs ]; # This will bite back when I bootstrap...
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # plexus-utils
+      mavenLibs
+      
+      plexus-container-default
+    ];
+    patches = [
+      ./patches/org.sonatype.plexus.build.incremental.EmptyScanner.java.patch 
+    ];
     src = fetchFromGitHub {
       owner = "sonatype";
       repo = "sisu-build-api";
@@ -581,11 +629,53 @@ let
       hash = "sha256-QDHojfMpSKhfhfEhgszxFDCYe9gcnx1KA6PPhwozvLQ=";
     };
   };
+
+  maven-filtering = buildMavenArtifact rec {
+    pname = "maven-filtering";
+    version = "3.3.1";
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # javax-inject
+      # slf4j-api
+      # maven-core
+      # maven-model
+      # maven-settings
+      # plexus-utils
+      # plexus-interpolation
+      # commons-io
+      # commons-lang3
+      mavenLibs
+      
+      plexus-xml
+      plexus-build-api
+    ];
+    src = fetchFromGitHub {
+      owner = "apache";
+      repo = "maven-filtering";
+      rev = "maven-filtering-${version}";
+      hash = "sha256-Wfi8g+a5e55UVyJjsRggUiK0NPNcE+UEWPcS1dMtZWM=";
+    };
+  };
   
   maven-resources-plugin = buildMavenArtifact rec { 
     pname = "maven-resources-plugin";
     version = "3.3.0";
-    dependencies = [ mavenLibs maven-plugin-annotations ];
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # maven-plugin-api
+      # maven-core
+      # maven-model
+      # maven-settings
+      # plexus-utils
+      # plexus-interpolation
+      # commons-io
+      # commons-lang3
+      # plexus
+      mavenLibs
+      
+      maven-plugin-annotations
+      maven-filtering
+    ];
     src = fetchFromGitHub {
       owner = "apache";
       repo = "maven-resources-plugin";
