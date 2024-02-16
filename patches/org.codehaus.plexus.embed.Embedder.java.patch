@@ -1,0 +1,17 @@
+--- a/src/main/java/org/codehaus/plexus/embed/Embedder.java
++++ b/src/main/java/org/codehaus/plexus/embed/Embedder.java
+@@ -145,7 +145,11 @@
+ 
+     public synchronized void setProperties( File file )
+     {
+-        properties = PropertyUtils.loadProperties( file );
++        try {
++            properties = PropertyUtils.loadProperties( file );
++        } catch (java.io.IOException e) {
++            throw new RuntimeException(e);
++        }
+     }
+ 
+     // ----------------------------------------------------------------------
+
+Diff finished.  Sat Feb 17 00:21:55 2024
