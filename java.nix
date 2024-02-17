@@ -156,7 +156,7 @@ let
       hash = "";
     };
   };
-  
+
   guava = buildJar {
     pname = "guava";
     version = guavaVersion;
@@ -597,6 +597,16 @@ let
     paths = [ ];
   };
 
+  # 1. Feels like might dissapear at any moment
+  # 2. fetchzip falls apart because of two top level dirs
+  # Just put it in the repo.
+  jsr305 = buildJar rec {
+    pname = "jsr305";
+    version = "3.0.2";
+    src = ./jsr305;
+    paths = [ "." ];
+  };
+
   maven-plugin-tools-version = "3.10.2";
   
   maven-plugin-tools = fetchFromGitHub {
@@ -875,6 +885,136 @@ let
       rm maven-plugin-tools-api/src/main/java/org/apache/maven/tools/plugin/javadoc/JavadocSite.java
       rm maven-plugin-tools-api/src/main/java/org/apache/maven/tools/plugin/javadoc/JavadocLinkGenerator.java
     '';
+  };
+
+  plexus-io = buildJar rec {
+    pname = "plexus-io";
+    version = "3.4.1";
+    src = fetchFromGitHub {
+      owner = "codehaus-plexus";
+      repo = "plexus-io";
+      rev = "plexus-io-${version}";
+      hash = "sha256-YqVQJn2xttDM3khktS3SdwI4UANtV5CHxJ4nw4w1P6I=";
+    };
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # plexus-utils
+      # commons-io
+      mavenLibs
+      
+      jsr305
+    ];
+  };
+
+  bitshuffle = stdenv.mkDerivation rec {
+    pname = "bitshuffle";
+    version = "0.5.1";
+    src = fetchFromGitHub {
+      owner = "kiyo-masui";
+      repo = "bitshuffle";
+      rev = version;
+      hash = "sha256-wZvCi9pKWEOVlT69IUY2cjyiia1m0bLPXh7JqJmRtIs=";
+    };
+    nativeBuildInputs = [
+      pkgs.lz4 pkgs.hdf5
+    ];
+    patchPhase = ''
+      rm src/lzf_h5plugin.c
+    '';
+    buildPhase = ''
+      cc src/*.c -shared -o libbitshuffle.so
+    '';
+    installPhase = ''
+      mkdir -pv $out/{lib,include}
+      cp libbitshuffle.so $out/lib
+      patchelf --add-needed ${pkgs.lz4.out}/lib/liblz4.so $out/lib/libbitshuffle.so
+      cp src/{bitshuffle,bitshuffle_core}.h $out/include
+    '';
+  };
+
+  snappy = stdenv.mkDerivation rec {
+    pname = "snappy-java";
+    version = "1.1.8";
+    src = fetchFromGitHub {
+      owner = "xerial";
+      repo = "snappy-java";
+      rev = version;
+      hash = "sha256-lsJ2zBJWQO5T7Z9ug5Bsp84zl9yNmbhFTASfGJPvd9w=";
+    };
+    nativeBuildInputs = [ pkgs.snappy pkgs.jdk bitshuffle ];
+    patchPhase = ''
+      find . -type f \( -not -name '*.java' \) -and \( -not -name '*.cpp' \) -and \( -not -name '*.h' \) -exec rm -v {} \;
+      rm -rvf lib # Remove vendored headers
+      rm src/main/java/org/xerial/snappy/SnappyBundleActivator.java
+    '';
+    buildPhase = ''
+      mkdir build classes
+      for x in $(find src -name '*.cpp'); do
+      c++ -Isrc/main/java/org/xerial/snappy $(find src/main/java -name '*.cpp') -shared -o libsnappyjava.so
+      done
+      javac $(find src/main/java -name '*.java') -d classes
+    '';
+    installPhase = ''
+      mkdir -pv $out/share/java $out/lib
+      cp libsnappyjava.so $out/lib
+      patchelf --add-needed ${bitshuffle}/lib/libbitshuffle.so $out/lib/libsnappyjava.so
+      patchelf --add-needed ${pkgs.snappy}/lib/libsnappy.so $out/lib/libsnappyjava.so
+      jar -cf $out/share/java/${pname}-${version}.jar -C classes .
+      echo 'org.xerial.snappy.use.systemlib=true' > org-xerial-snappy.properties
+      jar -uf $out/share/java/${pname}-${version}.jar org-xerial-snappy.properties
+    '';
+  };
+
+  plexus-archiver = buildJar rec {
+    pname = "plexus-archiver";
+    version = "4.9.1";
+    src = fetchFromGitHub {
+      owner = "codehaus-plexus";
+      repo = "plexus-archiver";
+      rev = "plexus-archiver-${version}";
+      hash = "sha256-iqI7NWzZ7p9fXCWkyYMX/CoMZVoiTNJUjqnRmhojJi4=";
+    };
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # javax-inject
+      # plexus-utils
+      # commons-io
+      # slf4j-api
+      mavenLibs
+
+      plexus-io
+      snappy
+      # commons-compress
+      # xz
+      # zstd-jni
+      # jsr305
+    ];
+  };
+
+  maven-plugin-tools-annotations = buildJar rec {
+    pname = "maven-plugin-tools-annotations";
+    version = maven-plugin-tools-version;
+    src = maven-plugin-tools;
+    paths = [ "maven-plugin-tools-annotations/src/main/java" ];
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # maven-plugin-api
+      # maven-core
+      # maven-model
+      # maven-artifact
+      # slf4j-api
+      # plexus-utils
+      # sisu-plexus
+      mavenLibs
+      
+      plexus-archiver
+      # asm
+      # asm-util
+      # jsoup
+      # qdox
+      # maven-plugin-tools-api
+      # maven-plugin-annotations
+    ];
   };
   
   maven-plugin-plugin = buildJar rec {
