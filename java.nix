@@ -849,7 +849,7 @@ let
   };
   
   maven-plugin-tools-api = buildJar rec {
-    pname = "maven-plugin-plugin";
+    pname = "maven-plugin-tools-api";
     version = maven-plugin-tools-version;
     src = maven-plugin-tools;
     dependencies = [
