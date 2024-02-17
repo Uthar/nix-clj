@@ -949,9 +949,7 @@ let
     '';
     buildPhase = ''
       mkdir build classes
-      for x in $(find src -name '*.cpp'); do
       c++ -Isrc/main/java/org/xerial/snappy $(find src/main/java -name '*.cpp') -shared -o libsnappyjava.so -lbitshuffle -lsnappy
-      done
       javac $(find src/main/java -name '*.java') -d classes
     '';
     installPhase = ''
