@@ -1,0 +1,22 @@
+--- a/doxia-sink-api/src/main/java/org/apache/maven/doxia/sink/Sink.java
++++ b/doxia-sink-api/src/main/java/org/apache/maven/doxia/sink/Sink.java
+@@ -19,7 +19,7 @@
+  * under the License.
+  */
+ 
+-import org.apache.maven.doxia.logging.LogEnabled;
++// import org.apache.maven.doxia.logging.LogEnabled;
+ 
+ /**
+  * A <i>Sink</i> consumes Doxia events to produce a resultant output format
+@@ -56,7 +56,7 @@
+  * @author ltheussl
+  */
+ public interface Sink
+-    extends LogEnabled
++//    extends LogEnabled
+ {
+     /** The Plexus Sink Role. */
+     String ROLE = Sink.class.getName();
+
+Diff finished.  Sat Feb 17 18:28:42 2024
