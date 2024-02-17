@@ -696,11 +696,25 @@ let
     buildInputs = artifacts;
     dontUnpack = true;
     installPhase = ''
+      declare -A seen=()
       mkdir -p $out/share/m2
-      for input in $buildInputs; do
-        for group0 in $input/share/m2/*; do
-            cp -rs $group0 $out/share/m2/$(basename $group0)
+      addPathToM2 () {
+        if [ -v seen[$1] ]; then
+          return
+        fi
+        seen[$1]=1
+        for group0 in $1/share/m2/*; do
+          cp -rs $group0 $out/share/m2/$(basename $group0)
+          prop=$1/nix-support/propagated-build-inputs
+          if [ -e $prop ]; then
+            for next in $(cat $prop); do
+              addPathToM2 $next
+            done
+          fi
         done
+      }
+      for path in "$buildInputs"; do
+        addPathToM2 $path
       done
     '';
   };
