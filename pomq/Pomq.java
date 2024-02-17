@@ -37,6 +37,11 @@ public static void main (String[] args) {
       }
     }
   }
+  // fail if null, to stop nix build
+  if (version == null) {
+    System.err.println("Could not find group id in pom: " + pom);
+    System.exit(1);
+  }
   System.out.print(version);
   } catch (Exception e) { System.err.println(e.getMessage()); }
 }
