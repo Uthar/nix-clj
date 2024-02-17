@@ -553,6 +553,20 @@ let
     find $maven -type f -name '*.jar' -exec cp {} $out/share/java \;
   '';
 
+  apache-pom = buildMavenArtifact rec {
+    pname = "apache-pom";
+    # TODO extract this from pom, just like groupId is?
+    artifact = "apache";
+    version = "26";
+    src = fetchFromGitHub {
+      owner = "apache";
+      repo = "maven-apache-parent";
+      rev = "apache-${version}";
+      hash = "sha256-TL6aNJTfglSM3NZvQ26HYXbaktEKzTU7k3hgF9R+0VI=";
+    };
+    paths = [ ];
+  };
+
   maven-parent-version = "36";
 
   maven-parent = fetchFromGitHub {
@@ -818,6 +832,7 @@ let
       # TODO multiple jars/poms per derivation
       maven-plugins-pom
       maven-parent-pom
+      apache-pom
       
       maven-resources-plugin
     ];
