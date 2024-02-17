@@ -1,4 +1,4 @@
-{ stdenvNoCC, lib, pkgs, fetchFromGitHub, fetchzip, jdk, ant, ... }:
+{ stdenv, stdenvNoCC, lib, pkgs, fetchFromGitLab, fetchFromGitHub, fetchzip, jdk, ant, ... }:
 
 # TODO: maven is not bootstrapped in Nixpkgs - but it is in Guix - copy them.
 
@@ -729,11 +729,155 @@ let
     };
   };
 
-  # Need this also in buildMavenArtifact, for maven-plugin packaging. So need to
-  # use the lower-level buildJar.
+  # Need these for maven-plugin-plugin for buildMavenArtifact, for maven plugin
+  # descriptor generation. (It seems too complex to try and recreate it by
+  # hand.)
   #
-  # Oops, might mean that need to bootstrap a whole lot of other stuff with
-  # buildJar, too
+  # So need to use the lower-level buildJar. Oops, might mean that need to
+  # bootstrap a whole lot of other stuff with buildJar, too
+
+  asm = buildJar rec {
+    pname = "asm";
+    version = "9.6";
+    src = fetchFromGitLab {
+      domain = "gitlab.ow2.org";
+      owner = "asm";
+      repo = "asm";
+      rev = "ASM_9_6";
+      hash = "sha256-aAAsaGeELcdDs3bmTOn013ZVanOlXaS1ZZ7nng44BP4=";
+    };
+    paths = [
+      "asm/src/main/java"
+    ];
+  };
+
+  byaccj = stdenv.mkDerivation rec {
+    pname = "byaccj";
+    version = "1.15";
+    src = fetchzip {
+      url = "mirror://sourceforge/project/byaccj/byaccj/${version}/byaccj${version}_src.tar.gz";
+      hash = "sha256-np+ekTA3F6Vmnj29CN4YijPO74aZsW72Cw4rUOAGRBE=";
+    };
+    buildPhase = ''
+      cc src/*.c -o yacc
+    '';
+    installPhase = ''
+      mkdir -pv $out/bin
+      cp yacc $out/bin
+    '';
+  };
+
+  qdox = buildJar rec {
+    pname = "qdox";
+    version = "2.1.0";
+    src = fetchFromGitHub {
+      owner = "paul-hammant";
+      repo = "qdox";
+      rev = "qdox-${version}";
+      hash = "sha256-lCbtAYys/Luuya2fiOQaf3KOYx080UtpZQUvd2EEKfU=";
+    };
+    paths = [ "src/main/java" "parser" ];
+    dependencies = [
+      byaccj
+      pkgs.jflex # TODO reuse jdk
+    ];
+    configurePhase = ''
+      jflex -d parser/ src/grammar/lexer.flex src/grammar/commentlexer.flex
+      (cd parser; yacc -v -Jnorun -Jnoconstruct -Jclass=DefaultJavaCommentParser -Jpackage=com.thoughtworks.qdox.parser.impl ../src/grammar/commentparser.y)
+      (cd parser; yacc -v -Jnorun -Jnoconstruct -Jclass=Parser -Jimplements=CommentHandler -Jsemantic=Value -Jpackage=com.thoughtworks.qdox.parser.impl -Jstack=500 ../src/grammar/parser.y)
+      ls -l parser/
+    '';
+  };
+
+  plexus-java = buildJar rec {
+    pname = "plexus-java";
+    version = "1.2.0";
+    src = fetchFromGitHub {
+      owner = "codehaus-plexus";
+      repo = "plexus-languages";
+      rev = "plexus-languages-${version}";
+      hash = "sha256-uj8UXISvcixVVPmxE1K4jcNSPCbE2snOk4Mzy1e4zlc=";
+    };
+    paths = [ "plexus-java/src/main/java" ];
+    dependencies = [
+      # TODO unpack from mavenLibs
+      # javax-inject
+      mavenLibs
+      asm
+      qdox
+    ];
+  };
+
+  maven-doxia-version = "1.11.1";
+
+  maven-doxia = fetchFromGitHub {
+    owner = "apache";
+    repo = "maven-doxia";
+    rev = "doxia-${maven-doxia-version}";
+    hash = "sha256-4edu0TgtTyj6ZH7rO/zoUnZTrFSaJyqr8sFN8ewdSWU=";
+  };
+
+  # TODO remove
+  # doxia-logging-api = buildJar rec {
+  #   pname = "doxia-logging-api";
+  #   version = maven-doxia-version;
+  #   src = maven-doxia;
+  #   dependencies = [ plexus-container-default ];
+  #   paths = [ "doxia-logging-api/src/main/java" ];
+  # };
+
+  doxia-sink-api = buildJar rec {
+    pname = "doxia-sink-api";
+    version = maven-doxia-version;
+    src = maven-doxia;
+    paths = [ "doxia-sink-api/src/main/java" ];
+    # Strip out the logging bullcrap
+    patches = [ ./patches/org.apache.maven.doxia.sink.Sink.java.patch ];
+  };
+
+  maven-reporting-api = buildJar rec {
+    pname = "maven-reporting-api";
+    version = "3.1.1";
+    src = fetchFromGitHub {
+      owner = "apache";
+      repo = "maven-reporting-api";
+      rev = "maven-reporting-api-${version}";
+      hash = "sha256-NlIHukl+UTDdXVE2cRQOedodggnckSdVlUpfmDaz/jY=";
+    };
+    dependencies = [
+      doxia-sink-api
+    ];
+  };
+  
+  maven-plugin-tools-api = buildJar rec {
+    pname = "maven-plugin-plugin";
+    version = maven-plugin-tools-version;
+    src = maven-plugin-tools;
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # maven-core
+      # maven-model
+      # maven-plugin-api
+      # maven-artifact
+      # slf4j-api
+      # plexus-utils
+      # wagon-provider-api
+      mavenLibs
+
+      maven-reporting-api
+      
+      # Declared, but code compiles without them.
+      # plexus-java
+      # plexus-xml
+    ];
+    paths = [ "maven-plugin-tools-api/src/main/java" ];
+    postPatch = ''
+      # Not going to be making any http requests
+      rm maven-plugin-tools-api/src/main/java/org/apache/maven/tools/plugin/javadoc/JavadocSite.java
+      rm maven-plugin-tools-api/src/main/java/org/apache/maven/tools/plugin/javadoc/JavadocLinkGenerator.java
+    '';
+  };
+  
   maven-plugin-plugin = buildJar rec {
     pname = "maven-plugin-plugin";
     version = maven-plugin-tools-version;
@@ -749,12 +893,12 @@ let
       # plexus
       mavenLibs
       
-      # plexus-velocity
+      plexus-velocity
       
       # For m2e support, maybe can be stripped out
       # plexus-build-api
       
-      # maven-plugin-tools-api
+      maven-plugin-tools-api
       # maven-plugin-tools-generators
       # maven-plugin-tools-java
       # maven-plugin-tools-annotations
@@ -765,15 +909,15 @@ let
     paths = [ "maven-plugin-plugin/src/main/java" ];
   };
     
-  maven-plugin-annotations = buildMavenArtifact rec {
+  maven-plugin-annotations = buildJar rec {
     pname = "maven-plugin-annotations";
     version = maven-plugin-tools-version;
     src = maven-plugin-tools;
     paths = [ "maven-plugin-annotations/src/main/java" ];
-    pom = "maven-plugin-annotations/pom.xml";
+    # pom = "maven-plugin-annotations/pom.xml";
   };
 
-  plexus-xml = buildMavenArtifact rec {
+  plexus-xml = buildJar rec {
     pname = "plexus-xml";
     version = "3.0.0";
     dependencies = [
