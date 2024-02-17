@@ -658,6 +658,9 @@ let
       # class errors. Pick out what is really missing in the source tree:
       "parser/Token.java"
       "parser/StandardParserConstants.java"
+      "parser/StandardParser.java"
+      "parser/StandardParserTokenManager.java"
+      "parser/TokenMgrError.java"
       "parser/StandardParserTreeConstants.java"
       "parser/JJTStandardParserState.java"
     ];
