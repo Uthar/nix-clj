@@ -41,6 +41,7 @@ let
   }: stdenvNoCC.mkDerivation ({
     inherit pname version src;
     nativeBuildInputs = [ jdk ] ++ dependencies;
+    propagatedBuildInputs = dependencies;
     buildPhase = ''
       javac ${javacFlags} -encoding utf-8 -d classes $(find ${lib.concatStringsSep " " paths} -type f -name '*.java')
     '';
@@ -523,9 +524,13 @@ let
     '';
   };
 
-  buildMavenArtifact = args@{pname, version, pom ? "pom.xml", ...}: (buildJar args).overrideAttrs (oa: {
+  buildMavenArtifact = args@{pname, version, group ? "", artifact ? pname, mavenVersion ? version, pom ? "pom.xml", ...}: (buildJar args).overrideAttrs (oa: {
     installPhase = oa.installPhase + ''
-      jar --date=1980-01-01T00:00:02Z --update --file $out/share/java/${pname}-${version}.jar ${pom}
+      dir="$out/share/m2/${lib.replaceStrings ["."] ["/"] group}/${artifact}/${mavenVersion}"
+      mkdir -p -v $dir
+      ln -s $out/share/java/${pname}-${version}.jar $dir/${artifact}-${version}.jar
+      cp -v ${pom} $dir/${artifact}-${version}.pom
+      # Needed? jar --date=1980-01-01T00:00:02Z --update --file $out/share/java/${pname}-${version}.jar ${pom}
     '';
   });
 
@@ -657,7 +662,8 @@ let
     };
   };
   
-  maven-resources-plugin = buildMavenArtifact rec { 
+  maven-resources-plugin = buildMavenArtifact rec {
+    group = "org.apache.maven.plugins";
     pname = "maven-resources-plugin";
     version = "3.3.0";
     dependencies = [
@@ -684,10 +690,26 @@ let
     };
   };
 
+  buildM2 = artifacts: stdenvNoCC.mkDerivation {
+    pname = "m2";
+    version = "repository";
+    buildInputs = artifacts;
+    dontUnpack = true;
+    installPhase = ''
+      mkdir -p $out/share/m2
+      for input in $buildInputs; do
+        for group0 in $input/share/m2/*; do
+            cp -rs $group0 $out/share/m2/$(basename $group0)
+        done
+      done
+    '';
+  };
+
   buildMavenProject = {
     pname
     , version
     , src
+    , m2 ? []
     , doCheck ? false
     , goal ? "package"
     , testGoal ? "test"
@@ -700,18 +722,17 @@ let
 
     nativeBuildInputs = [ jdk maven ];
 
+    M2 = buildM2 m2;
+
     configurePhase = ''
-      export MAVEN_REPOSITORY=$(pwd)/m2
-      mkdir -p $MAVEN_REPOSITORY/org/apache/maven/plugins/maven-resources-plugin/3.3.0
-      touch $MAVEN_REPOSITORY/org/apache/maven/plugins/maven-resources-plugin/3.3.0/maven-resources-plugin-3.3.0.jar
-      touch $MAVEN_REPOSITORY/org/apache/maven/plugins/maven-resources-plugin/3.3.0/maven-resources-plugin-3.3.0.pom
+      echo "Maven repo is: $M2"
     '';
 
     # Fails due to missing plugins/mojos
     # Do they come with maven when bootstrapped? (Nix has a binary version)
     # Or are they in separate projects?
     buildPhase = ''
-      mvn --offline -Dmaven.repo.local=$MAVEN_REPOSITORY ${goal} -DskipTests=true;
+      mvn -e --offline -Dmaven.repo.local=$M2/share/m2 ${goal} -DskipTests=true;
     '';
 
     checkPhase = ''
@@ -738,6 +759,9 @@ let
   jfreechart = buildMavenProject {
     pname = "jfreechart";
     version = "1.5.4";
+    m2 = [
+      maven-resources-plugin
+    ];
     src = fetchFromGitHub {
       owner = "jfree";
       repo = "jfreechart";
