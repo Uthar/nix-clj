@@ -1100,7 +1100,7 @@ let
     '';
 
     # Fails due to missing plugins/mojos
-    # Do they come with maven when bootstrapped? (Nix has a binary version)
+    # Do they come with maven when bootstrapped? (Nixpkgs has a binary version)
     # Or are they in separate projects?
     buildPhase = ''
       # mvn -e --offline -Dmaven.repo.local=$M2/share/m2 ${goal} -DskipTests=true;
