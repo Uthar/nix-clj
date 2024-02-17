@@ -785,7 +785,6 @@ let
       jflex -d parser/ src/grammar/lexer.flex src/grammar/commentlexer.flex
       (cd parser; yacc -v -Jnorun -Jnoconstruct -Jclass=DefaultJavaCommentParser -Jpackage=com.thoughtworks.qdox.parser.impl ../src/grammar/commentparser.y)
       (cd parser; yacc -v -Jnorun -Jnoconstruct -Jclass=Parser -Jimplements=CommentHandler -Jsemantic=Value -Jpackage=com.thoughtworks.qdox.parser.impl -Jstack=500 ../src/grammar/parser.y)
-      ls -l parser/
     '';
   };
 
