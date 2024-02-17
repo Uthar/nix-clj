@@ -526,9 +526,12 @@ let
 
   buildMavenArtifact = args@{pname, version, group ? "", artifact ? pname, mavenVersion ? version, pom ? "pom.xml", ...}: (buildJar args).overrideAttrs (oa: {
     installPhase = oa.installPhase + ''
-      dir="$out/share/m2/${lib.replaceStrings ["."] ["/"] group}/${artifact}/${mavenVersion}"
+      group=$(java ${./pomq/Pomq.java} ${pom})
+      echo "Found group in ${pom}: $group"
+      dir="$out/share/m2/$(echo $group | tr '.' '/')/${artifact}/${mavenVersion}"
       mkdir -p -v $dir
-      ln -s $out/share/java/${pname}-${version}.jar $dir/${artifact}-${version}.jar
+      # ln -s $out/share/java/${pname}-${version}.jar $dir/${artifact}-${version}.jar
+      cp -v $out/share/java/${pname}-${version}.jar $dir/${artifact}-${version}.jar
       cp -v ${pom} $dir/${artifact}-${version}.pom
       # Needed? jar --date=1980-01-01T00:00:02Z --update --file $out/share/java/${pname}-${version}.jar ${pom}
     '';
@@ -697,14 +700,17 @@ let
     dontUnpack = true;
     installPhase = ''
       declare -A seen=()
-      mkdir -p $out/share/m2
+      mkdir -pv $out/share/m2
       addPathToM2 () {
         if [ -v seen[$1] ]; then
           return
         fi
         seen[$1]=1
         for group0 in $1/share/m2/*; do
-          cp -rs $group0 $out/share/m2/$(basename $group0)
+          echo "Doing top level group: $group0"
+          ls -l $out/share/m2
+          chmod -R a+w $out/share/m2
+          cp -rs $group0 $out/share/m2
           prop=$1/nix-support/propagated-build-inputs
           if [ -e $prop ]; then
             for next in $(cat $prop); do
