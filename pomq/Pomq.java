@@ -43,7 +43,10 @@ public static void main (String[] args) {
     System.exit(1);
   }
   System.out.print(version);
-  } catch (Exception e) { System.err.println(e.getMessage()); }
+  } catch (Exception e) {
+    System.err.println(e.getMessage());
+    System.exit(1);
+  }
 }
 
 }
