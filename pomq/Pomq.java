@@ -14,7 +14,7 @@ public static void main (String[] args) {
   DocumentBuilder db = factory.newDocumentBuilder();
   Document doc = db.parse(new java.io.File(pom));
   String version = null;
-  Node parent = doc.getElementsByTagName("parent").item(0);
+  Node parent = doc.getElementsByTagName("project").item(0);
   Node n;
   if (parent != null) {
     NodeList sub = parent.getChildNodes();
@@ -26,7 +26,7 @@ public static void main (String[] args) {
     }
   }
   if (version != null) {
-    Node project = doc.getElementsByTagName("project").item(0);
+    Node project = doc.getElementsByTagName("parent").item(0);
     if (project != null) {
       NodeList sub = project.getChildNodes();
       for (int i = 0; (n = sub.item(i)) != null; i++) {
