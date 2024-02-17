@@ -596,12 +596,165 @@ let
   };
 
   maven-plugin-tools-version = "3.10.2";
-
+  
   maven-plugin-tools = fetchFromGitHub {
     owner = "apache";
     repo = "maven-plugin-tools";
     rev = "maven-plugin-tools-${maven-plugin-tools-version}";
     hash = "sha256-QsYuY+Cs8nHNBvbBYQSU7WMfgtH7MO4WSFrgEgkLmE4=";
+  };
+
+  #### Dependencies of maven-plugin-plugin, which is needed to bootstrap
+  #### buildMavenArtifact:
+
+  # So need to bootstrap javacc without maven, for velocity engine.
+  #
+  # Fortunately, they have a build.xml!
+  #
+  # But wait... javacc is self hosted. How to bootstrap THAT?
+  #
+  # HACK: For now, just use the non-bootstrapped one that is already in nixpkgs.
+  #
+  # I wanted to. But velocity is using an ANCIENT version of it. There does NOT
+  # appear to be the source code for this anywhere.
+  #
+  # javacc = pkgs.javacc.overrideAttrs (oa: {
+  #   version = "5.0";
+  #   doCheck = false;
+  #   src = fetchFromGitHub {
+  #     owner = "javacc";
+  #     repo = "javacc";
+  #     rev = "release_60";
+  #     hash = "sha256-rCnr+f6RViWvTLghWhCWLm2oODmyZmmMgj20YgunBuU=";
+  #   };
+  # });
+  inherit (pkgs) javacc;
+  
+
+  # Velocity engine one uses javacc to generate a parser.
+  #
+  # Parser definition is in src/main/parser. Also need to emulate maven
+  # resources plugin filtering there.
+  velocity-engine-core = buildJar rec {
+    pname = "velocity-engine-core";
+    version = "2.4";
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # commons-lang3
+      # slf4j-api
+      mavenLibs
+    ];
+    src = fetchFromGitHub {
+      owner = "apache";
+      repo = "velocity-engine";
+      rev = version;
+      hash = "sha256-+biMZsQHRLRWKd03JsKXgXPKBbj6oDX7Ir3SwJ+Z2Wo=";
+    };
+    paths = [
+      "velocity-engine-core/src/main/java"
+      # Looks like most of the generated junk is just that. It causes duplicate
+      # class errors. Pick out what is really missing in the source tree:
+      "parser/Token.java"
+      "parser/StandardParserConstants.java"
+      "parser/StandardParserTreeConstants.java"
+      "parser/JJTStandardParserState.java"
+    ];
+    nativeBuildInputs = [ jdk javacc ];
+    # Copied from upstream pom.xml - but looks like it's just old noise - they
+    # don't do anything.
+    javaccFlags = [
+      "STATIC=false"
+      "BUILD_PARSER=true"
+      "TOKEN_MANAGER_USES_PARSER=true"
+      "OUTPUT_DIRECTORY=parser"
+    ];
+    jjtreeFlags = [
+      "BUILD_NODE_FILES=true"
+      "MULTI=true"
+      "NODE_USES_PARSER=true"
+      "NODE_PACKAGE=org.apache.velocity.runtime.parser.node"
+      "OUTPUT_DIRECTORY=parser"
+    ];
+    substitutions = pkgs.writeText "env.properties" ''
+      parser.debug=false
+      parser.package=org.apache.velocity.runtime.parser
+      parser.basename=Standard
+      parser.char.asterisk=*
+      parser.char.at=@
+      parser.char.dollar=$
+      parser.char.hash=#
+      project.version=2.4
+    '';
+    configurePhase = ''
+      java ${./envsubst/Envsubst.java} \
+        ${substitutions} \
+        velocity-engine-core/src/main/parser/Parser.jjt \
+        parser/Parser.jjt
+      # 'template' is a reserved keyword in newer versions or something?
+      substituteInPlace parser/Parser.jjt --replace template tmplt
+      jjtree ${lib.concatMapStringsSep " " (x: "-${x}") jjtreeFlags} parser/Parser.jjt
+      javacc ${lib.concatMapStringsSep " " (x: "-${x}") javaccFlags} parser/Parser.jj
+      java ${./envsubst/Envsubst.java} \
+        ${substitutions} \
+        velocity-engine-core/src/main/java-templates/org/apache/velocity/runtime/VelocityEngineVersion.java \
+        velocity-engine-core/src/main/java/org/apache/velocity/runtime/VelocityEngineVersion.java
+    '';
+  };
+  
+  plexus-velocity = buildJar rec {
+    pname = "plexus-velocity";
+    version = "2.1.0";
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # javax-inject
+      # sisu-inject
+      # slf4j-api # runtime
+      mavenLibs
+
+      velocity-engine-core
+    ];
+    src = fetchFromGitHub {
+      owner = "codehaus-plexus";
+      repo = pname;
+      rev = "${pname}-${version}";
+      hash = "";
+    };
+  };
+
+  # Need this also in buildMavenArtifact, for maven-plugin packaging. So need to
+  # use the lower-level buildJar.
+  #
+  # Oops, might mean that need to bootstrap a whole lot of other stuff with
+  # buildJar, too
+  maven-plugin-plugin = buildJar rec {
+    pname = "maven-plugin-plugin";
+    version = maven-plugin-tools-version;
+    src = maven-plugin-tools;
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # maven-core
+      # maven-plugin-api
+      # maven-model
+      # maven-repository-metadata
+      # maven-artifact
+      # plexus-utils
+      # plexus
+      mavenLibs
+      
+      # plexus-velocity
+      
+      # For m2e support, maybe can be stripped out
+      # plexus-build-api
+      
+      # maven-plugin-tools-api
+      # maven-plugin-tools-generators
+      # maven-plugin-tools-java
+      # maven-plugin-tools-annotations
+      
+      # Maybe don't need this. I will call the lib not the mojo.
+      # maven-plugin-annotations
+    ];
+    paths = [ "maven-plugin-plugin/src/main/java" ];
   };
     
   maven-plugin-annotations = buildMavenArtifact rec {
