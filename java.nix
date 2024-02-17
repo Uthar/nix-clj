@@ -524,14 +524,17 @@ let
     '';
   };
 
-  buildMavenArtifact = args@{pname, version, group ? "", artifact ? pname, mavenVersion ? version, pom ? "pom.xml", ...}: (buildJar args).overrideAttrs (oa: {
-    installPhase = oa.installPhase + ''
+  buildMavenArtifact = args@{pname, version, paths ? ["src/main/java"], group ? "", artifact ? pname, mavenVersion ? version, pom ? "pom.xml", ...}: (buildJar args).overrideAttrs (oa: rec {
+    dontBuild = builtins.length paths == 0;
+    installPhase = (lib.optionalString (!dontBuild) oa.installPhase) + ''
       group=$(java ${./pomq/Pomq.java} ${pom})
       echo "Found group in ${pom}: $group"
       dir="$out/share/m2/$(echo $group | tr '.' '/')/${artifact}/${mavenVersion}"
       mkdir -p -v $dir
-      # ln -s $out/share/java/${pname}-${version}.jar $dir/${artifact}-${version}.jar
-      cp -v $out/share/java/${pname}-${version}.jar $dir/${artifact}-${version}.jar
+      jar=$out/share/java/${pname}-${version}.jar
+      if [ -e $jar ]; then
+        ln -s $jar $dir/${artifact}-${version}.jar
+      fi
       cp -v ${pom} $dir/${artifact}-${version}.pom
       # Needed? jar --date=1980-01-01T00:00:02Z --update --file $out/share/java/${pname}-${version}.jar ${pom}
     '';
@@ -549,6 +552,34 @@ let
     mkdir -p $out/share/java
     find $maven -type f -name '*.jar' -exec cp {} $out/share/java \;
   '';
+
+  maven-parent-version = "36";
+
+  maven-parent = fetchFromGitHub {
+    owner = "apache";
+    repo = "maven-parent";
+    rev = "maven-parent-${maven-parent-version}";
+    hash = "sha256-g6UYvXXfnufndQUz++KwDjRinRP/nUYoq3L18inWLyg=";
+  };
+
+  maven-plugins-pom = buildMavenArtifact {
+    pname = "maven-plugins-pom";
+    # TODO extract this from pom, just like groupId is?
+    artifact = "maven-plugins";
+    version = maven-parent-version;
+    src = maven-parent;
+    paths = [ ];
+    pom = "maven-plugins/pom.xml";
+  };
+
+  maven-parent-pom = buildMavenArtifact {
+    pname = "maven-parent-pom";
+    # TODO extract this from pom, just like groupId is?
+    artifact = "maven-parent";
+    version = maven-parent-version;
+    src = maven-parent;
+    paths = [ ];
+  };
 
   maven-plugin-tools-version = "3.10.2";
 
@@ -719,9 +750,11 @@ let
           fi
         done
       }
-      for path in "$buildInputs"; do
+      for path in $(echo $buildInputs); do
+        echo "Doing build input: $path"
         addPathToM2 $path
       done
+      # exit 42 # Debug
     '';
   };
 
@@ -781,6 +814,11 @@ let
     pname = "jfreechart";
     version = "1.5.4";
     m2 = [
+      # FIXME figure out where it really belongs
+      # TODO multiple jars/poms per derivation
+      maven-plugins-pom
+      maven-parent-pom
+      
       maven-resources-plugin
     ];
     src = fetchFromGitHub {
