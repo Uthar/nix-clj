@@ -25,7 +25,7 @@ public static void main (String[] args) {
       }
     }
   }
-  if (version != null) {
+  if (version == null) {
     Node project = doc.getElementsByTagName("parent").item(0);
     if (project != null) {
       NodeList sub = project.getChildNodes();

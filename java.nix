@@ -752,7 +752,8 @@ let
     # Do they come with maven when bootstrapped? (Nix has a binary version)
     # Or are they in separate projects?
     buildPhase = ''
-      mvn -e --offline -Dmaven.repo.local=$M2/share/m2 ${goal} -DskipTests=true;
+      # mvn -e --offline -Dmaven.repo.local=$M2/share/m2 ${goal} -DskipTests=true;
+      mvn --offline -Dmaven.repo.local=$M2/share/m2 ${goal} -DskipTests=true;
     '';
 
     checkPhase = ''
