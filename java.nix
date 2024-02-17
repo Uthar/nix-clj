@@ -48,6 +48,7 @@ let
     installPhase = ''
       mkdir -p $out/share/java
       jar --date=1980-01-01T00:00:02Z --create --file $out/share/java/${pname}-${version}.jar -C classes .
+      runHook postInstall
     '';
   } // args);
 
@@ -537,6 +538,7 @@ let
       fi
       cp -v ${pom} $dir/${artifact}-${version}.pom
       # Needed? jar --date=1980-01-01T00:00:02Z --update --file $out/share/java/${pname}-${version}.jar ${pom}
+      runHook postInstall
     '';
   });
 
@@ -698,6 +700,9 @@ let
         ${substitutions} \
         velocity-engine-core/src/main/java-templates/org/apache/velocity/runtime/VelocityEngineVersion.java \
         velocity-engine-core/src/main/java/org/apache/velocity/runtime/VelocityEngineVersion.java
+    '';
+    postInstall = ''
+      jar --date=1980-01-01T00:00:02Z --update --file $out/share/java/${pname}-${version}.jar -C velocity-engine-core/src/main/resources .
     '';
   };
   
