@@ -923,12 +923,11 @@ let
       rm src/lzf_h5plugin.c
     '';
     buildPhase = ''
-      cc src/*.c -shared -o libbitshuffle.so
+      cc src/*.c -shared -o libbitshuffle.so -llz4 -lhdf5
     '';
     installPhase = ''
       mkdir -pv $out/{lib,include}
       cp libbitshuffle.so $out/lib
-      patchelf --add-needed ${pkgs.lz4.out}/lib/liblz4.so $out/lib/libbitshuffle.so
       cp src/{bitshuffle,bitshuffle_core}.h $out/include
     '';
   };
@@ -951,15 +950,13 @@ let
     buildPhase = ''
       mkdir build classes
       for x in $(find src -name '*.cpp'); do
-      c++ -Isrc/main/java/org/xerial/snappy $(find src/main/java -name '*.cpp') -shared -o libsnappyjava.so
+      c++ -Isrc/main/java/org/xerial/snappy $(find src/main/java -name '*.cpp') -shared -o libsnappyjava.so -lbitshuffle -lsnappy
       done
       javac $(find src/main/java -name '*.java') -d classes
     '';
     installPhase = ''
       mkdir -pv $out/share/java $out/lib
       cp libsnappyjava.so $out/lib
-      patchelf --add-needed ${bitshuffle}/lib/libbitshuffle.so $out/lib/libsnappyjava.so
-      patchelf --add-needed ${pkgs.snappy}/lib/libsnappy.so $out/lib/libsnappyjava.so
       jar -cf $out/share/java/${pname}-${version}.jar -C classes .
       echo 'org.xerial.snappy.use.systemlib=true' > org-xerial-snappy.properties
       jar -uf $out/share/java/${pname}-${version}.jar org-xerial-snappy.properties
