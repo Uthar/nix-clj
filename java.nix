@@ -919,6 +919,7 @@ let
       pkgs.lz4 pkgs.hdf5
     ];
     patchPhase = ''
+      # This seems to be some python stuff?
       rm src/lzf_h5plugin.c
     '';
     buildPhase = ''
