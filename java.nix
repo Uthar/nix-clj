@@ -717,7 +717,7 @@ let
       owner = "codehaus-plexus";
       repo = pname;
       rev = "${pname}-${version}";
-      hash = "";
+      hash = "sha256-bogCl1iIXtZh8WS3zbOP9ZWdXPeNjdxb9enMwIxc+d4=";
     };
   };
 
