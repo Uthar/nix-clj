@@ -1054,12 +1054,12 @@ let
 
   plexus-archiver = buildJar rec {
     pname = "plexus-archiver";
-    version = "4.9.1";
+    version = "4.8.0";
     src = fetchFromGitHub {
       owner = "codehaus-plexus";
       repo = "plexus-archiver";
       rev = "plexus-archiver-${version}";
-      hash = "sha256-iqI7NWzZ7p9fXCWkyYMX/CoMZVoiTNJUjqnRmhojJi4=";
+      hash = "sha256-/pI3QJsOnpiuEypOOxuZ559sy+n0u209GLehEwN7HxU=";
     };
     dependencies = [
       # TODO unwrap from mavenLibs
@@ -1071,10 +1071,10 @@ let
 
       plexus-io
       snappy
-      # commons-compress
-      # xz
-      # zstd-jni
-      # jsr305
+      commons-compress
+      xz-java
+      zstd-jni
+      jsr305
     ];
   };
 
