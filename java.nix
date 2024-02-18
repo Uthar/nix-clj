@@ -770,6 +770,15 @@ let
     ];
   };
 
+  asm-commons = buildJar rec {
+    pname = "asm-commons";
+    inherit (asm) version src;
+    dependencies = [ asm asm-tree ];
+    paths = [
+      "asm-commons/src/main/java"
+    ];
+  };
+
   asm-analysis = buildJar rec {
     pname = "asm-analysis";
     inherit (asm) version src;
@@ -1166,11 +1175,103 @@ let
       maven-plugin-annotations
     ];
   };
+
+  xml-commons = buildJar rec {
+    pname = "xml-commons";
+    version = "1.4.01";
+    src = fetchzip {
+      url = "mirror://apache/xerces/xml-commons/source/xml-commons-external-${version}-src.tar.gz";
+      hash = "sha256-jVtkdODcZPArXgTP9MUlCbP64Pd/lUPxL4Jw6P679p0=";
+      stripRoot = false;
+    };
+    paths = [ "." ];
+    javacFlags = [ "--release 8" ];
+  };
+
+  xml-commons-resolver = buildJar rec {
+    pname = "xml-commons-resolver";
+    version = "1.2";
+    src = fetchzip {
+      url = "mirror://apache/xerces/xml-commons/xml-commons-resolver-${version}.tar.gz";
+      hash = "sha256-saq62L1vOv1tfTcfPEoHkXvHgfbMSyLeWQ8MeGseMwQ=";
+    };
+    paths = [ "${pname}-${version}/src" ];
+    postPatch = ''
+      find -name '*.jar' -exec rm {} \;
+      find -name '*Test?.java' -exec rm {} \;
+    '';
+    javacFlags = [ "--release 8" ];
+  };
+
+  ant = buildJar rec {
+    pname = "ant";
+    version = "1.10.14";
+    src = fetchzip {
+      url = "mirror://apache/ant/source/apache-ant-${version}-src.tar.gz";
+      hash = "sha256-U/tFnXzbkVqnkMYQp9Mv90wYW+I5GkeDhefN04LUAcE=";
+    };
+    postPatch = ''
+      rm -r src/main/org/apache/tools/ant/types/optional
+      rm -r src/main/org/apache/tools/ant/taskdefs/optional
+      rm -r src/main/org/apache/tools/ant/util/optional
+      rm -r src/main/org/apache/tools/ant/taskdefs/{email,Get.java,SendEmail.java,XSLTProcess.java,XSLTLiaison2.java}
+    '';
+    dependencies = [ xml-commons-resolver ];
+    paths = [ "src/main" ];
+  };
+
+  # HACK? (not sure if ant is bootstrapped)
+  antJar = pkgs.runCommand "ant-jar" { inherit (pkgs) ant; } ''
+    mkdir -p $out/share/java
+    ln -s $ant/lib/ant/lib/ant.jar $out/share/java/ant.jar
+  '';
+
+  jtidy = buildJar rec {
+    pname = "jtidy";
+    version = "r938";
+    src = pkgs.fetchsvn {
+      url = "https://svn.code.sf.net/p/jtidy/code/trunk";
+      rev = version;
+      sha256 = "sha256-XKipXJZK/TEWWqsExSSToLLPHhFreAccUbRKvt8AJrw=";
+    };
+    paths = [ "jtidy/src/main/java" ];
+    dependencies = [ antJar ];
+  };
+
+  maven-plugin-tools-generators = buildJar rec {
+    pname = "maven-plugin-tools-generators";
+    version = maven-plugin-tools-version;
+    src = maven-plugin-tools;
+    # Saves me from packaging one thing.
+    patches = [
+      ./patches/org.apache.maven.tools.plugin.generator.PluginHelpGenerator.java.patch 
+      ./patches/org.apache.maven.tools.plugin.generator.PluginDescriptorFilesGenerator.java.patch
+    ];
+    paths = [ "maven-plugin-tools-generators/src/main/java" ];
+    dependencies = [
+      # TODO unwrap from mavenLibs
+      # maven-model
+      # plexus-utils
+      mavenLibs
+      
+      maven-plugin-tools-api
+      plexus-velocity
+      velocity-engine-core
+      asm
+      asm-commons
+      jsoup
+      jtidy
+    ];
+  };
   
   maven-plugin-plugin = buildJar rec {
     pname = "maven-plugin-plugin";
     version = maven-plugin-tools-version;
     src = maven-plugin-tools;
+    # HACK Don't need the mojos. Will only use the libs.
+    postPatch = ''
+      find -name '*Mojo.java' -exec rm -v {} \;
+    '';
     dependencies = [
       # TODO unwrap from mavenLibs
       # maven-core
@@ -1188,7 +1289,7 @@ let
       # plexus-build-api
       
       maven-plugin-tools-api
-      # maven-plugin-tools-generators
+      maven-plugin-tools-generators
       # maven-plugin-tools-java
       maven-plugin-tools-annotations
       
