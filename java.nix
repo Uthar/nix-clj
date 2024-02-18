@@ -36,14 +36,14 @@ let
     pname, version, src
     , dependencies ? []
     , paths ? ["src/main/java"]
-    , javacFlags ? "--release 8"
+    , javacFlags ? ["--release 8" "-encoding utf-8"]
     , ...
   }: stdenvNoCC.mkDerivation ({
     inherit pname version src;
     nativeBuildInputs = [ jdk ] ++ dependencies;
     propagatedBuildInputs = dependencies;
     buildPhase = ''
-      javac ${javacFlags} -encoding utf-8 -d classes $(find ${lib.concatStringsSep " " paths} -type f -name '*.java')
+      javac ${lib.concatStringsSep " " javacFlags} -d classes $(find ${lib.concatStringsSep " " paths} -type f -name '*.java')
     '';
     installPhase = ''
       mkdir -p $out/share/java
@@ -949,16 +949,65 @@ let
     '';
     buildPhase = ''
       mkdir build classes
-      c++ -Isrc/main/java/org/xerial/snappy $(find src/main/java -name '*.cpp') -shared -o libsnappyjava.so -lbitshuffle -lsnappy
+      c++ -Isrc/main/java/org/xerial/snappy $(find src/main/java -name '*.cpp') -shared -o build/libsnappyjava.so -lbitshuffle -lsnappy
       javac $(find src/main/java -name '*.java') -d classes
     '';
     installPhase = ''
       mkdir -pv $out/share/java $out/lib
-      cp libsnappyjava.so $out/lib
+      cp build/libsnappyjava.so $out/lib
       jar -cf $out/share/java/${pname}-${version}.jar -C classes .
       echo 'org.xerial.snappy.use.systemlib=true' > org-xerial-snappy.properties
       jar -uf $out/share/java/${pname}-${version}.jar org-xerial-snappy.properties
     '';
+  };
+
+  zstd-jni = stdenv.mkDerivation rec {
+    pname = "zstd-jni";
+    version = "${pkgs.zstd.version}-1";
+    src = fetchFromGitHub {
+      owner = "luben";
+      repo = "zstd-jni";
+      rev = "v${version}";
+      hash = "sha256-2NZ5HtIPJoW4gXLM/DQo2YR9FnUnW+qbnAFwkWJIlgM=";
+    };
+    nativeBuildInputs = [ jdk pkgs.zstd ];
+    patchPhase = ''
+      find . -type f \( -not -name '*.java' \) -and \( -not -name 'jni_*.c' \) -exec rm {} \;
+      rm -rf jni # Remove vendored headers
+      # Gradle script does this
+      substituteInPlace src/main/java/com/github/luben/zstd/util/Native.java \
+        --replace 'ZstdVersion.VERSION' '"${version}"'
+    '';
+    buildPhase = ''
+      mkdir build classes
+      # It depends on this private header
+      cc -I${pkgs.zstd.src}/lib/common $(find -name '*.c') -shared -o build/libzstd-jni-${version}.so -lzstd
+      javac $(find src/main/java -name '*.java') -d classes 
+    '';
+    installPhase = ''
+      mkdir -p $out/share/java $out/lib
+      cp build/*.so $out/lib
+      jar -cf $out/share/java/${pname}-${version}.jar -C classes .
+    '';
+  };
+
+  commons-compress = buildJar rec {
+    pname = "commons-compress";
+    version = "1.25.0";
+    src = fetchFromGitHub {
+      owner = "apache";
+      repo = "commons-compress";
+      rev = "rel/commons-compress-${version}";
+      hash = "sha256-wTPEpMR3c6hblTcFV9ItZc1m4+MvQLm09Cb7Ft+WUxI=";
+    };
+    javacFlags = [ "--release 8" "-encoding iso-8859-1" ];
+    dependencies = [
+      # zstd-jni
+      # brotli-dec
+      # xz
+      asm
+      # osgi-core # Add when needed
+    ];
   };
 
   plexus-archiver = buildJar rec {
