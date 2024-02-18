@@ -36,7 +36,7 @@ let
     pname, version, src
     , dependencies ? []
     , paths ? ["src/main/java"]
-    , javacFlags ? ["--release 8" "-encoding utf-8"]
+    , javacFlags ? ["--release 9" "-encoding utf-8"]
     , ...
   }: stdenvNoCC.mkDerivation ({
     inherit pname version src;
@@ -761,6 +761,33 @@ let
     ];
   };
 
+  asm-tree = buildJar rec {
+    pname = "asm-tree";
+    inherit (asm) version src;
+    dependencies = [ asm ];
+    paths = [
+      "asm-tree/src/main/java"
+    ];
+  };
+
+  asm-analysis = buildJar rec {
+    pname = "asm-analysis";
+    inherit (asm) version src;
+    dependencies = [ asm-tree ];
+    paths = [
+      "asm-analysis/src/main/java"
+    ];
+  };
+
+  asm-util = buildJar rec {
+    pname = "asm-util";
+    inherit (asm) version src;
+    dependencies = [ asm asm-tree asm-analysis ];
+    paths = [
+      "asm-util/src/main/java"
+    ];
+  };
+
   byaccj = stdenv.mkDerivation rec {
     pname = "byaccj";
     version = "1.15";
@@ -874,17 +901,14 @@ let
       mavenLibs
 
       maven-reporting-api
-      
-      # Declared, but code compiles without them.
-      # plexus-java
+      plexus-java
+
+      # Declared, but code compiles without it.
       # plexus-xml
     ];
     paths = [ "maven-plugin-tools-api/src/main/java" ];
-    postPatch = ''
-      # Not going to be making any http requests
-      rm maven-plugin-tools-api/src/main/java/org/apache/maven/tools/plugin/javadoc/JavadocSite.java
-      rm maven-plugin-tools-api/src/main/java/org/apache/maven/tools/plugin/javadoc/JavadocLinkGenerator.java
-    '';
+    # Not going to be making any http requests (not needed for the bootstrap)
+    patches = [ ./patches/org.apache.maven.tools.plugin.javadoc.JavadocSite.java.patch ];
   };
 
   plexus-io = buildJar rec {
@@ -950,7 +974,8 @@ let
     buildPhase = ''
       mkdir build classes
       c++ -Isrc/main/java/org/xerial/snappy $(find src/main/java -name '*.cpp') -shared -o build/libsnappyjava.so -lbitshuffle -lsnappy
-      javac $(find src/main/java -name '*.java') -d classes
+      # TODO get rid of the unsafe dependency to build with 8
+      javac --release 9 $(find src/main/java -name '*.java') -d classes
     '';
     installPhase = ''
       mkdir -pv $out/share/java $out/lib
@@ -1061,6 +1086,21 @@ let
       rev = "plexus-archiver-${version}";
       hash = "sha256-/pI3QJsOnpiuEypOOxuZ559sy+n0u209GLehEwN7HxU=";
     };
+    postPatch = ''
+      substituteInPlace $(find -name '*.java') \
+        --replace org.iq80.snappy org.xerial.snappy
+      # HACK I have an older version of commons-io
+      dir="src/main/java/org/apache/commons/io/output"
+      mkdir -p $dir
+      cat <<EOF > $dir/NullPrintStream.java
+      package org.apache.commons.io.output;
+      public class NullPrintStream extends java.io.PrintStream {
+        public static final NullPrintStream INSTANCE = new NullPrintStream();
+        public static final NullPrintStream NULL_PRINT_STREAM = INSTANCE;
+        public NullPrintStream() { super(NullOutputStream.NULL_OUTPUT_STREAM); }
+      }
+      EOF
+    '';
     dependencies = [
       # TODO unwrap from mavenLibs
       # javax-inject
@@ -1076,6 +1116,29 @@ let
       zstd-jni
       jsr305
     ];
+  };
+
+  jspecify = buildJar rec {
+    pname = "jspecify";
+    version = "0.3.0";
+    src = fetchFromGitHub {
+      owner = "jspecify";
+      repo = "jspecify";
+      rev = "v${version}";
+      hash = "sha256-kPeRTncvY5iIQQ4AOM6prOFxMRjvM8Dc8/wPuJFk5go=";
+    };
+  };
+
+  jsoup = buildJar rec {
+    pname = "jsoup";
+    version = "1.17.2";
+    src = fetchFromGitHub {
+      owner = "jhy";
+      repo = "jsoup";
+      rev = "jsoup-${version}";
+      hash = "sha256-Zkq2W9p8AAgeuWxze1QJfmmzwLPz4iNm6UggW5sZmJ0=";
+    };
+    dependencies = [ jspecify ];
   };
 
   maven-plugin-tools-annotations = buildJar rec {
@@ -1095,12 +1158,12 @@ let
       mavenLibs
       
       plexus-archiver
-      # asm
-      # asm-util
-      # jsoup
-      # qdox
-      # maven-plugin-tools-api
-      # maven-plugin-annotations
+      asm
+      asm-util
+      jsoup
+      qdox
+      maven-plugin-tools-api
+      maven-plugin-annotations
     ];
   };
   
@@ -1127,7 +1190,7 @@ let
       maven-plugin-tools-api
       # maven-plugin-tools-generators
       # maven-plugin-tools-java
-      # maven-plugin-tools-annotations
+      maven-plugin-tools-annotations
       
       # Maybe don't need this. I will call the lib not the mojo.
       # maven-plugin-annotations
@@ -1375,16 +1438,17 @@ let
     };    
   };
 
-  jsoup = buildMavenProject {
-    pname = "jsoup";
-    version = "1.17.2";
-    src = fetchFromGitHub {
-      owner = "jhy";
-      repo = "jsoup";
-      rev = "jsoup-1.17.2";
-      hash = "sha256-Zkq2W9p8AAgeuWxze1QJfmmzwLPz4iNm6UggW5sZmJ0=";
-    };    
-  };
-  
-}
+  # Need as buildJar for bootstrap.
+  # jsoup = buildMavenProject {
+  #   pname = "jsoup";
+  #   version = "1.17.2";
+  #   src = fetchFromGitHub {
+  #     owner = "jhy";
+  #     repo = "jsoup";
+  #     rev = "jsoup-1.17.2";
+  #     hash = "sha256-Zkq2W9p8AAgeuWxze1QJfmmzwLPz4iNm6UggW5sZmJ0=";
+  #   };    
+  # };
+  }
+
     
