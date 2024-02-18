@@ -1021,6 +1021,18 @@ let
     '';
   };
 
+  xz-java = buildJar rec {
+    pname = "xz-java";
+    version = "1.9";
+    src = fetchFromGitHub {
+      owner = "tukaani-project";
+      repo = "xz-java";
+      rev = "v${version}";
+      hash = "sha256-W3CtViPiyMbDIAPlu5zbUdvhMkZLVxZzB9niT49jNbE=";
+    };
+    paths = [ "src" ];
+  };
+
   commons-compress = buildJar rec {
     pname = "commons-compress";
     version = "1.25.0";
@@ -1033,8 +1045,8 @@ let
     javacFlags = [ "--release 8" "-encoding iso-8859-1" ];
     dependencies = [
       zstd-jni
-      # brotli-dec
-      # xz
+      brotli-full
+      xz-java
       asm
       # osgi-core # Add when needed
     ];
