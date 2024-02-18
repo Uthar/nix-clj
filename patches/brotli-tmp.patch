@@ -1,0 +1,21 @@
+--- a/java/org/brotli/wrapper/dec/decoder_jni.cc
++++ b/java/org/brotli/wrapper/dec/decoder_jni.cc
+@@ -8,6 +8,8 @@
+ 
+ #include <new>
+ 
++#include <iostream>
++
+ #include <brotli/decode.h>
+ 
+ namespace {
+@@ -46,6 +48,7 @@
+   bool ok = true;
+   DecoderHandle* handle = nullptr;
+   jlong context[3];
++  std::cout << "BOOOOOOOOM" << std::endl;
+   env->GetLongArrayRegion(ctx, 0, 3, context);
+   size_t input_size = context[1];
+   context[0] = 0;
+
+Diff finished.  Sun Feb 18 02:25:04 2024
