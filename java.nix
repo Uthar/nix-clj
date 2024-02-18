@@ -991,6 +991,36 @@ let
     '';
   };
 
+  brotli-full = stdenv.mkDerivation rec {
+    pname = "brotli-full";
+    version = "1.0.0-SNAPSHOT";
+    # Weird bug, github tarball does not contain the same code as in the cloned
+    # repo. Need this for the java bindings. Force it with fetchgit.
+    src = pkgs.fetchgit {
+      url = "https://github.com/google/brotli.git";
+      rev = "v${pkgs.brotli.version}";
+      hash = "sha256-FkxAWl+KwEtUojTjahBQy9QvVvUXTkoCIuFHvzmVdvE=";
+    };
+    nativeBuildInputs = [ jdk pkgs.brotli pkgs.tree ];
+    dontConfigure = true;
+    patches = [ ./patches/brotli-tmp.patch ];
+    postPatch = ''
+      ls | grep -v "java\|c" | xargs rm -rf {}
+      rm -rvf java/org/brotli/integration
+      find -type f -name '*Test.java' -exec rm {} \;
+    '';
+    buildPhase = ''
+      mkdir build classes
+      cc -I. $(find java -name '*.cc') -fPIC -shared -o build/libbrotli_jni.so -lbrotlidec -lbrotlienc -lbrotlicommon
+      javac -encoding utf-8 -d classes $(find java -name '*.java')
+    '';
+    installPhase = ''
+      mkdir -p $out/share/java $out/lib
+      cp build/*.so $out/lib
+      jar -cf $out/share/java/${pname}-${version}.jar -C classes .
+    '';
+  };
+
   commons-compress = buildJar rec {
     pname = "commons-compress";
     version = "1.25.0";
@@ -1002,7 +1032,7 @@ let
     };
     javacFlags = [ "--release 8" "-encoding iso-8859-1" ];
     dependencies = [
-      # zstd-jni
+      zstd-jni
       # brotli-dec
       # xz
       asm
