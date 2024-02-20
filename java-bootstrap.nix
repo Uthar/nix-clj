@@ -1,4 +1,5 @@
 { pkgs, lib, stdenv, makeWrapper
+, fetchurl
 , fetchzip
 , fetchFromSavannah
 , fastjar
@@ -11,6 +12,7 @@
 , autoconf-archive
 , libtool
 , gettext
+, texinfo
 , ... }:
 
 # Java bootstrap from C++
@@ -172,7 +174,7 @@ rec {
       ecj-bootstrap
       jamvm-1
       fastjar
-      autoconf automake autoconf-archive libtool gettext
+      autoconf automake autoconf-archive libtool gettext texinfo
     ];
     preConfigure = ''
       autoreconf -vif
@@ -192,6 +194,86 @@ rec {
       "--disable-gjdoc"
       "--disable-examples"
     ];
+    postPatch = ''
+      substituteInPlace $(grep -l -r '@Override') --replace @Override "" 
+    '';
+    # Not sure what this does.
+    postInstall = ''
+      make install-data
+    '';
   };
+
+  jamvm = stdenv.mkDerivation rec {
+    pname = "jamvm";
+    version = "2.0.0";
+    src = fetchzip {
+      url = "mirror://sourceforge/jamvm/jamvm/JamVM%20${version}/jamvm-${version}.tar.gz";
+      hash = "sha256-FSL2x2C3a3RQ88pRokZQ6dbXcgZFbZLiIZ6MfsFY70Y=";
+    };
+    patches = [
+      patches/jamvm-2.0.0-disable-branch-patching.patch
+      patches/jamvm-2.0.0-opcode-guard.patch
+    ];
+    # Remove precompiled software.
+    postPatch = ''
+      rm src/classlib/gnuclasspath/lib/classes.zip
+    '';
+    configureFlags = [
+      "--with-classpath-install-dir=${classpath-devel}"
+    ];
+    buildInputs = [ ecj-bootstrap zlib zip ];
+  };
+
+  ecj-javac-wrapper-new-jamwm-2 = stdenv.mkDerivation rec {
+    pname = "ecj-javac-wrapper";
+    version = "2";
+    dontUnpack = true;
+    buildInputs = [ makeWrapper ];
+    installPhase = ''
+      mkdir -p $out/bin
+      makeWrapper ${jamvm}/bin/jamvm $out/bin/javac \
+        --prefix CLASSPATH : '.' \
+        --prefix CLASSPATH : ${ecj-bootstrap}/share/java/ecj-${ecj-bootstrap.version}.jar \
+        --add-flags -Xmx768m \
+        --add-flags org.eclipse.jdt.internal.compiler.batch.Main \
+        --add-flags -nowarn
+    '';
+  };
+
+  ecj4-bootstrap = stdenv.mkDerivation rec {
+    pname = "ecj-bootstrap";
+    version = "4.2.1";
+    src = fetchurl {
+      url = "http://archive.eclipse.org/eclipse/downloads/drops4/R-${version}-201209141800/ecjsrc-${version}.jar";
+      hash = "sha256-0mGyFY9ZhkDxkjgF0um/R+sh2DM/Ths39Z+EetANSPQ=";
+    };
+    unpackPhase = "gjar xf $src";
+    postPatch = ''
+      # This directive is not supported by our simple bootstrap JDK.
+      substituteInPlace $(grep -l -r '@Override') --replace @Override ""
+
+      # We can't compile these yet, but we don't need them at this point anyway.
+      rm org/eclipse/jdt/core/JDTCompilerAdapter.java
+      rm -r org/eclipse/jdt/internal/antadapter
+    '';
+    buildInputs = [ ecj-javac-wrapper-new-jamwm-2 classpath-devel makeWrapper ];
+    buildPhase = ''
+      javac -source 1.5 -target 1.5 -classpath ${jamvm}/lib/rt.jar:${ant-bootstrap}/lib/ant.jar $(find -name '*.java')
+    '';
+    installPhase = ''
+      mkdir -p $out/{bin,share/java}
+      gjar cf $out/share/java/ecj-${version}.jar .
+      makeWrapper ${jamvm}/bin/jamvm $out/bin/javac \
+        --prefix CLASSPATH : '.' \
+        --prefix CLASSPATH : $out/share/java/ecj-${version}.jar \
+        --add-flags -Xmx768m \
+        --add-flags org.eclipse.jdt.internal.compiler.batch.Main \
+        --add-flags -nowarn
+    '';
+  };
+
+  jamvm-with-ecj4 = jamvm.overrideAttrs (o: {
+    buildInputs = (lib.remove ecj-bootstrap o.buildInputs) ++ [ ecj4-bootstrap ];
+  });
 
 }
