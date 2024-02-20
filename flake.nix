@@ -13,8 +13,16 @@
         java = pkgs.callPackage ./java.nix {
           inherit (devpkgs) jdk;
         };
+        mavenBootstrap = pkgs.callPackage ./mavenBootstrap.nix {
+          inherit (devpkgs) jdk;
+        };
       in {
-        
+
+        packages.mavenBootstrap = mavenBootstrap;
+
+        packages.zstd = pkgs.zstd;
+        packages.brotli = pkgs.brotli;
+                
         packages.clojure = clojure;
 
         packages.java = java;
