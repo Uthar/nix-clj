@@ -57,7 +57,8 @@ let
     #   sources from the uberjar, leaving only the bytecode. This was immediately
     #   visible by loading being an order of magnitude faster.
     # - Put the jar in $out/share/java for it to be found by nixpkgs setup hooks.
-    
+
+    # TODO maybe use clojure.lang.Compile
     buildPhase = let
       src' = if builtins.length patches > 0
              then applyPatches { inherit src patches; }
