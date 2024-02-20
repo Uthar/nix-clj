@@ -437,6 +437,7 @@ rec {
       hash = "sha256-IhwfJtGGKPC+5R2nXW6mYCs0UsVBHSxRV2oUt+Rv8dU";
     };
     ns = [
+      # FIXME isn't this the default?
       "compliment.core"
     ];
    };
