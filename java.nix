@@ -37,10 +37,11 @@ let
     , dependencies ? []
     , paths ? ["src/main/java"]
     , javacFlags ? ["--release 9" "-encoding utf-8"]
+    , _jdk ? jdk
     , ...
   }: stdenvNoCC.mkDerivation ({
     inherit pname version src;
-    nativeBuildInputs = [ jdk ] ++ dependencies;
+    nativeBuildInputs = [ _jdk ] ++ dependencies;
     propagatedBuildInputs = dependencies;
     buildPhase = ''
       javac ${lib.concatStringsSep " " javacFlags} -d classes $(find ${lib.concatStringsSep " " paths} -type f -name '*.java')
@@ -1506,6 +1507,69 @@ let
       mvn -o ${installGoal}
     '';
     
+  };
+
+
+  
+  freelogj = buildJar rec {
+    pname = "freelogj";
+    version = "0.0.1";
+    src = fetchFromGitHub {
+      owner = "chriswhocodes";
+      repo = "FreeLogJ";
+      rev = "2c09ed93b57822ff1c067d1595c2b4894e23a9bb";
+      hash = "sha256-0k7lc8XomM7Uxl33mU7OcUB8DsXCBBo+rZOFMZcM+nw=";
+    };
+  };
+
+  javafx-uber = pkgs.runCommand "javafx-uber" { javafx = pkgs.openjfx17; jdk = pkgs.jdk17; } ''
+    mkdir -p $out/share/java
+    touch blah
+    $jdk/bin/jar -cf $out/share/java/javafx17.jar blah
+    for m in $(ls $javafx/modules); do
+      $jdk/bin/jar -uf $out/share/java/javafx17.jar -C $javafx/modules/$m .
+    done
+  '';
+
+  jitwatch-jar = buildJar rec {
+    pname = "jitwatch";
+    version = "1.4.9";
+    src = fetchFromGitHub {
+      owner = "AdoptOpenJDK";
+      repo = "jitwatch";
+      rev = version;
+      hash = "sha256-stXQfDUni/P6pqmMjqAOGqVObf2AxlNwe7o3xAMRq/8=";
+    };
+    dependencies = [
+      javafx-uber
+      freelogj
+    ];
+    paths = [ "core/src/main/java" "ui/src/main/java" ];
+    jdk = pkgs.jdk17;
+  };
+
+  # pname = "clojure";
+  # version = "with-packages";
+  # dontUnpack = true;
+  # buildInputs = [ makeBinaryWrapper ];
+  # propagatedBuildInputs = selectPackages packages;
+  # installPhase = ''
+  #   makeWrapper ${jdk}/bin/java $out/bin/clojure \
+  #     --add-flags clojure.main \
+  #     --prefix CLASSPATH : "$CLASSPATH"
+  # '';
+  
+  jitwatch = stdenvNoCC.mkDerivation {
+    pname = "jitwatch";
+    version = "1.4.9";
+    dontUnpack = true;
+    buildInputs = [ pkgs.makeWrapper ];
+    propagatedBuildInputs = [ jitwatch-jar ];
+    installPhase = ''
+      makeWrapper ${pkgs.jdk17}/bin/java $out/bin/jitwatch \
+        --add-flags org.adoptopenjdk.jitwatch.ui.main.JITWatchUI \
+        --prefix CLASSPATH : "$CLASSPATH"
+    '';
   };
   
 
