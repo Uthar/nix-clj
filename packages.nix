@@ -319,6 +319,7 @@ rec {
     deps = [ coreCache dataPriorityMap ];
   };
 
+  # FIXME binary blob
   asm = fetchMavenArtifact {
     groupId = "org.ow2.asm";
     artifactId = "asm";
