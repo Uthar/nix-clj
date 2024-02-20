@@ -16,6 +16,8 @@
         mavenBootstrap = pkgs.callPackage ./mavenBootstrap.nix {
           inherit (devpkgs) jdk;
         };
+        javaBootstrap = pkgs.callPackage ./java-bootstrap.nix {
+        };
       in {
 
         packages.mavenBootstrap = mavenBootstrap;
@@ -26,6 +28,8 @@
         packages.clojure = clojure;
 
         packages.java = java;
+
+        packages.javaBootstrap = javaBootstrap;
 
         packages.maven = pkgs.maven;
 
