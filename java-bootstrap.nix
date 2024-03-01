@@ -298,6 +298,7 @@ rec {
 
   # Can now start with openjdk:
 
+  # https://web.archive.org/web/20080523171517/http://icedtea.classpath.org/wiki/DebianBuildingInstructions
   icedtea-7 = stdenv.mkDerivation rec {
     pname = "icedtea";
     version = "2.6.13";
@@ -309,6 +310,9 @@ rec {
     postPatch = ''
       substituteInPlace acinclude.m4 \
         --replace 'attr/xattr.h' 'sys/xattr.h'
+      substituteInPlace Makefile.am \
+        --replace '$(SYSTEM_JDK_DIR)/jre/lib/rt.jar' \
+                  '${classpath-devel}/share/classpath/glibj.zip'
     '';
     preConfigure = ''
       autoreconf -vfi
