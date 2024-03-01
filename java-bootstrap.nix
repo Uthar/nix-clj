@@ -13,6 +13,26 @@
 , libtool
 , gettext
 , texinfo
+, coreutils
+, diffutils
+, gawk
+, gnugrep
+, pkg-config
+, which
+, cpio
+, libxslt
+, perl
+, nss
+, krb5
+, pcsclite
+# TODO strip out graphical stuff
+, xorg
+, libjpeg
+, libpng
+, giflib
+, lcms2
+, gtk2
+, alsa-lib
 , ... }:
 
 # Java bootstrap from C++
@@ -275,5 +295,79 @@ rec {
   jamvm-with-ecj4 = jamvm.overrideAttrs (o: {
     buildInputs = (lib.remove ecj-bootstrap o.buildInputs) ++ [ ecj4-bootstrap ];
   });
+
+  # Can now start with openjdk:
+
+  icedtea-7 = stdenv.mkDerivation rec {
+    pname = "icedtea";
+    version = "2.6.13";
+    src = fetchzip {
+      url = "http://icedtea.wildebeest.org/download/source/icedtea-${version}.tar.xz";
+      hash = "sha256-lOj+rN15jRhnwOgAc4Duw/ppL1aCk1oJAAdHi+5I2Bg=";
+    };
+    patches = [ ./patches/icedtea7.patch ];
+    postPatch = ''
+      substituteInPlace acinclude.m4 \
+        --replace 'attr/xattr.h' 'sys/xattr.h'
+    '';
+    preConfigure = ''
+      autoreconf -vfi
+    '';
+    # TODO a lot of this stuff seems unnecessary.
+    configureFlags = [
+      "--disable-system-sctp"
+      "--enable-system-pcsc" # Needed?
+      "--enable-system-lcms"
+      "--enable-bootstrap"
+      "--enable-nss"
+      "--without-rhino"
+      "--disable-downloading"
+      # "--with-parallel-jobs=$NIX_BUILD_CORES" 
+      "--disable-downloading"
+      "--disable-tests"
+      # "--with-openjdk-src-dir=./openjdk.src"
+      "--with-ecj=${ecj4-bootstrap}/bin/javac"
+      "--with-jdk-home=${classpath-devel}"
+      "--with-java=${jamvm-with-ecj4}/bin/jamvm"
+      "--with-jar=${classpath-devel}/bin/gjar"
+    ];
+    nativeBuildInputs = [
+      automake
+      autoconf
+      ant-bootstrap
+      classpath-devel
+      coreutils
+      diffutils
+      ecj4-bootstrap
+      fastjar #only for the configure phase; we actually use gjar
+      gawk
+      gnugrep
+      jamvm-with-ecj4
+      libtool
+      pkg-config
+      which
+      cpio
+      zip
+      unzip
+      libxslt
+      perl
+      nss
+      zlib
+      krb5
+      pcsclite
+      # TODO strip out graphical stuff from the jdk
+      xorg.libX11
+      xorg.libXt
+      xorg.libXtst
+      libjpeg
+      libpng
+      giflib
+      lcms2
+      gtk2
+      alsa-lib
+    ];
+  };
+
+  
 
 }
