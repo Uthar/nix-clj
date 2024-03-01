@@ -10,13 +10,14 @@
 rec {
 
   ## Config
-  jdk = pkgs.jdk8;
+  jdk = pkgs.jdk11;
 
   
   ## Machinery
   buildJar = args@{
     pname, version, src
     , dependencies ? []
+    , findCommands ? []
     , paths ? ["src/main/java"]
     , javacFlags ? ["-encoding utf-8"]
     , ...
@@ -25,8 +26,12 @@ rec {
     nativeBuildInputs = [ jdk ] ++ dependencies;
     propagatedBuildInputs = dependencies;
     buildPhase = ''
+      runHook preBuild
       mkdir classes
-      javac ${lib.concatStringsSep " " javacFlags} -d classes $(find ${lib.concatStringsSep " " paths} -type f -name '*.java')
+      ${lib.optionalString (builtins.length paths > 0)
+        "find ${lib.concatStringsSep " " paths} -type f -name '*.java' >> sources.txt"}
+      ${lib.concatMapStringsSep "\n" (x: "${x} >> sources.txt") findCommands}
+      javac ${lib.concatStringsSep " " javacFlags} -d classes @sources.txt
     '';
     installPhase = ''
       mkdir -p $out/share/java
@@ -308,6 +313,253 @@ rec {
       j2objc-annotations
     ];
   };
+
+  jspecify = buildJar rec {
+    pname = "jspecify";
+    version = "0.3.0";
+    src = fetchFromGitHub {
+      owner = "jspecify";
+      repo = "jspecify";
+      rev = "v${version}";
+      hash = "sha256-kPeRTncvY5iIQQ4AOM6prOFxMRjvM8Dc8/wPuJFk5go=";
+    };
+  };
+
+  args4j = buildJar rec {
+    pname = "args4j";
+    version = "2.0.16";
+    src = fetchFromGitHub {
+      owner = "kohsuke";
+      repo = "args4j";
+      rev = "args4j-${version}";
+      hash = "sha256-rkeqG2xsBMpXe5Y4kExOg2undoFs1HqmU+ehQoQltPo=";
+    };
+    postPatch = ''
+      substituteInPlace $(grep --files-with-matches -r 'IllegalAccessException _') \
+        --replace 'IllegalAccessException _' 'IllegalAccessException __'
+    '';
+    paths = [
+      "args4j/src"
+    ];
+  };
+
+  protobuf-java = buildJar rec {
+    pname = "protobuf-java";
+    version = pkgs.protobuf.version;
+    src = pkgs.protobuf.src;
+    paths = [ "java/core/src/main/java" ];
+    preBuild = ''
+      protoc --java_out=java/core/src/main/java \
+        -Isrc src/google/protobuf/descriptor.proto
+    '';
+    dependencies = [ pkgs.protobuf ];
+  };
+
+  gson = buildJar rec {
+    pname = "gson";
+    version = "2.4";
+    src = fetchFromGitHub {
+      owner = "google";
+      repo = "gson";
+      rev = "gson-${version}";
+      hash = "sha256-Z3uMZTW7jTwXiV3V5TLs6q2HVSU5trvLm/4mniWQJYo=";
+    };
+    paths = [ "gson/src/main/java" ];
+  };
+
+  javapoet = buildJar rec {
+    pname = "javapoet";
+    version = "1.13.0";
+    src = fetchFromGitHub {
+      owner = "square";
+      repo = "javapoet";
+      rev = "javapoet-${version}";
+      hash = "sha256-Pj28ZTJFi9WB5Qnl8XIrSkRkzdA4De0o4vL9Ww9XjuA=";
+    };
+  };
+
+  auto-common = buildJar rec {
+    pname = "auto-common";
+    version = "1.10.4";
+    src = fetchFromGitHub {
+      owner = "google";
+      repo = "auto";
+      rev = "auto-value-${version}";
+      hash = "sha256-AlgvL6wGtxt/1CiNEhjpaGK29MaBuSEubkvgUexYtCA=";
+    };
+    paths = [      
+      "common/src/main/java"
+    ];
+    dependencies = [
+      guava
+      javapoet
+    ];
+  };
+
+  auto-service-annotations = buildJar rec {
+    pname = "auto-service-annotations";
+    version = "1.10.4";
+    src = fetchFromGitHub {
+      owner = "google";
+      repo = "auto";
+      rev = "auto-value-${version}";
+      hash = "sha256-AlgvL6wGtxt/1CiNEhjpaGK29MaBuSEubkvgUexYtCA=";
+    };
+    paths = [
+      "service/annotations/src/main/java"
+    ];
+    dependencies = [
+    ];
+  };
+
+  auto-service-processor = buildJar rec {
+    pname = "auto-service-processor";
+    version = "1.10.4";
+    src = fetchFromGitHub {
+      owner = "google";
+      repo = "auto";
+      rev = "auto-value-${version}";
+      hash = "sha256-AlgvL6wGtxt/1CiNEhjpaGK29MaBuSEubkvgUexYtCA=";
+    };
+    paths = [
+      "service/processor/src/main/java"
+    ];
+    dependencies = [
+      auto-service-annotations
+      auto-common
+      guava
+    ];
+  };
+
+  escapevelocity = buildJar rec {
+    pname = "escapevelocity";
+    version = "1.1";
+    src = fetchFromGitHub {
+      owner = "google";
+      repo = "escapevelocity";
+      rev = "escapevelocity-${version}";
+      hash = "sha256-SaDNmUDlsK9v1ojJIuL6rENizRcqJaM7CpiZZi3kb+s=";
+    };
+    dependencies = [
+      guava
+    ];
+  };
+
+  incap = buildJar rec {
+    pname = "incap";
+    version = "1.0.0";
+    src = fetchFromGitHub {
+      owner = "tbroyer";
+      repo = "gradle-incap-helper";
+      rev = "v${version}";
+      hash = "sha256-RgMiLTeGL5bZBADuWyQmur7oRghzmb/bbo2+wAVda54=";
+    };
+    paths = [
+      "lib/src/main/java"
+      "processor/src/main/java"
+    ];
+    dependencies = [
+      auto-service-annotations
+    ];
+  };
+
+  kotlin-stdlib = buildJar rec {
+    pname = "kotlin-stdlib";
+    version = "1.9.22";
+    src = fetchFromGitHub {
+      owner = "JetBrains";
+      repo = "kotlin";
+      sparseCheckout = [
+        "libraries/stdlib"
+      ];
+      rev = "v1.9.22";
+      hash = "sha256-Bnc6IhiLgknZCNB6xYYfDorVsIuyu6QqlhIVg84McpU=";
+    };
+    paths = [
+      "libraries/stdlib/common/src/kotlin"
+    ];
+  };
+
+  kotlinx-metadata-jvm = buildJar rec {
+    pname = "kotlinx-metadata-jvm";
+    version = "0.7.0";
+    src = fetchFromGitHub {
+      owner = "JetBrains";
+      repo = "kotlin";
+      sparseCheckout = [
+        "libraries/stdlib"
+      ];
+      rev = "v1.9.22";
+      hash = "sha256-U5ItB9vaylpiyWf8N3gS8s/TG18ciS2m4QSW2kAibDg=";
+    };
+    paths = [ "libraries/kotlinx-metadata/jvm/src" ];
+  };
+
+  auto-value = buildJar rec {
+    pname = "auto-value";
+    version = "1.10.4";
+    src = fetchFromGitHub {
+      owner = "google";
+      repo = "auto";
+      rev = "auto-value-${version}";
+      hash = "sha256-AlgvL6wGtxt/1CiNEhjpaGK29MaBuSEubkvgUexYtCA=";
+    };
+    paths = [
+      "value/src/main/java"
+    ];
+    dependencies = [
+      auto-common
+      auto-service-annotations
+      error_prone_annotations
+      escapevelocity
+      incap
+      guava
+      # kotlinx-metadata-jvm
+      javapoet
+      asm
+    ];
+  };
+
+  closure-compiler = buildJar rec {
+    pname = "closure-compiler";
+    version = "v20231112";
+    src = fetchFromGitHub {
+      owner = "google";
+      repo = "closure-compiler";
+      rev = version;
+      hash = "sha256-Js006eVd4KngVu1XdyLbOBmQm5bWe/jJgsl+SsOS+KA=";
+    };
+    # Uses an older version of jspecify.
+    postPatch = ''
+      substituteInPlace $(grep -l -r org.jspecify.nullness.Nullable) \
+        --replace org.jspecify.nullness org.jspecify.annotations
+    '';
+    paths = [];
+    # Seems like it also needs some ConformanceConfig thing
+    # It may be a source file generated by protobuf
+    preBuild = ''
+      protoc --java_out=src src/com/google/debugging/sourcemap/proto/mapping.proto
+      protoc --java_out=src src/com/google/javascript/jscomp/conformance/conformance.proto
+      protoc --java_out=src src/com/google/javascript/jscomp/instrumentation/reporter/proto/profile.proto
+      protoc --java_out=src src/com/google/javascript/rhino/typed_ast/*.proto
+    '';
+    findCommands = [
+      "find -path './src/com/google/**/*.java' \ -and -not -path '**/debugger/**/*.java' \ -and -not -path '**/j2clbuild/**/*.java' \ -and -not -path '**/j2cl/**/*.java' \ -and -not -path '**/super*/**/*.java' \ -and -not -path '**/testing/**/*.java'  \ -and -not -path '**/webservice/**/*.java'"
+    ];
+    dependencies = [
+      pkgs.protobuf
+      protobuf-java
+      args4j
+      gson
+      error_prone_annotations
+      guava
+      # re2j
+      # ant
+      jspecify
+    ];
+  };
+
+
   
   guice = buildJar rec {
     pname = "guice";

@@ -614,4 +614,22 @@ rec {
     ];
   };
 
+  clojurescript = buildClojureLibrary {
+    pname = "clojurescript";
+    version = "1.11.132-trunk";
+    src = fetchFromGitHub {
+      owner = "clojure";
+      repo = "clojurescript";
+      rev = "acbefb9b1e79b659b639919fbf96cb3726719e25";
+      hash = "sha256-bEqn/hNXO9rcadKR/udyI0RA/a6B9OWNZ9Z5Uk+kU38=";
+    };
+    path = "src/main/clojure";
+    ns = [
+      "cljs.util"
+      "cljs.env"
+      "cljs.js-deps"
+      "cljs.core"
+    ];
+  };
+
 }
