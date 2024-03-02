@@ -1,0 +1,25 @@
+There's a bug somewhere deeper that adds a naked -I flag to gcc. That causes it
+to consider the next flag as an include path. In this case, it was ignoring the
+'-c' flag, and so was trying to link what was supposed to be an object
+file. This Überhack is to make sure that that trailing naked -I doesn't consume
+an important flag. Instead, feed a non-important flag to it.
+
+--- a/openjdk/jdk/make/common/internal/NativeCompileRules.gmk
++++ b/openjdk/jdk/make/common/internal/NativeCompileRules.gmk
+@@ -72,12 +72,12 @@
+ 
+ $(OBJDIR)/%.$(OBJECT_SUFFIX): %.c
+ 	@$(prep-target)
+-	$(COMPILE.c) $(CC_OBJECT_OUTPUT_FLAG)$@ $(CFLAGS_GPROF) $<
++	$(COMPILE.c) -I. -c $(CC_OBJECT_OUTPUT_FLAG)$@ $(CFLAGS_GPROF) $<
+ 	@$(check-conventions)
+ 
+ $(OBJDIR)/%.$(OBJECT_SUFFIX): %.cpp
+ 	@$(prep-target)
+-	$(COMPILE.cc) $(CC_OBJECT_OUTPUT_FLAG)$@ $(CFLAGS_GPROF) $<
++	$(COMPILE.cc) -I. -c $(CC_OBJECT_OUTPUT_FLAG)$@ $(CFLAGS_GPROF) $<
+ 	@$(check-conventions)
+ 
+ else
+
+Diff finished.  Sat Mar  2 17:14:35 2024
