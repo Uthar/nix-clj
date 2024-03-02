@@ -33,6 +33,7 @@
 , lcms2
 , gtk2
 , alsa-lib
+, cups
 , ... }:
 
 # Java bootstrap from C++
@@ -297,22 +298,81 @@ rec {
   });
 
   # Can now start with openjdk:
-
+  #
+  # See java.scm
+  #
   # https://web.archive.org/web/20080523171517/http://icedtea.classpath.org/wiki/DebianBuildingInstructions
-  icedtea-7 = stdenv.mkDerivation rec {
-    pname = "icedtea";
-    version = "2.6.13";
-    src = fetchzip {
-      url = "http://icedtea.wildebeest.org/download/source/icedtea-${version}.tar.xz";
-      hash = "sha256-lOj+rN15jRhnwOgAc4Duw/ppL1aCk1oJAAdHi+5I2Bg=";
-    };
-    patches = [ ./patches/icedtea7.patch ];
+  openjdk-7 = stdenv.mkDerivation rec {
+    pname = "openjdk";
+    icedteaVersion = "2.6.13";
+    version = "1.7.0_171+IcedTea-${icedteaVersion}";
+    srcs = [
+      (fetchzip {
+        name = "icedtea";
+        url = "http://icedtea.wildebeest.org/download/source/icedtea-${icedteaVersion}.tar.xz";
+        hash = "sha256-lOj+rN15jRhnwOgAc4Duw/ppL1aCk1oJAAdHi+5I2Bg=";
+      })
+      (fetchzip rec {
+        name = "openjdk";
+        url = "http://icedtea.classpath.org/download/drops/icedtea7/${icedteaVersion}/${name}.tar.bz2";
+        hash = "sha256-VrPMBXsczd06tsWi7mLE2lJqLClDd+OZYhvEFuDJx2Y=";
+      })
+      (fetchzip rec {
+        name = "corba";
+        url = "http://icedtea.classpath.org/download/drops/icedtea7/${icedteaVersion}/${name}.tar.bz2";
+        hash = "sha256-ZHYQhL8Fyd41PGqG71OzQRYx2UVAsbd984JBZeykJTk=";
+      })
+      (fetchzip rec {
+        name = "jaxp";
+        url = "http://icedtea.classpath.org/download/drops/icedtea7/${icedteaVersion}/${name}.tar.bz2";
+        hash = "sha256-UwrEVYbvF7UxUr5v5xIYSoMP/IsQQfFT29Ix3wepoWk=";
+      })
+      (fetchzip rec {
+        name = "jaxws";
+        url = "http://icedtea.classpath.org/download/drops/icedtea7/${icedteaVersion}/${name}.tar.bz2";
+        hash = "sha256-yuMM6T3L1JbL/AjPXA0ONyoD2wkq/m1V2/drWT/d+vY=";
+      })
+      (fetchzip rec {
+        name = "jdk";
+        url = "http://icedtea.classpath.org/download/drops/icedtea7/${icedteaVersion}/${name}.tar.bz2";
+        hash = "sha256-j2GeJZc+tg4+YXgevZ1sLITZktRp0xNrqreoI3GrVG4=";
+      })
+      (fetchzip rec {
+        name = "langtools";
+        url = "http://icedtea.classpath.org/download/drops/icedtea7/${icedteaVersion}/${name}.tar.bz2";
+        hash = "sha256-NwH8AvipGbsGnJwcip5AlBGLSTNpEqMaxqN+0179p/8=";
+      })
+      (fetchzip rec {
+        name = "hotspot";
+        url = "http://icedtea.classpath.org/download/drops/icedtea7/${icedteaVersion}/${name}.tar.bz2";
+        hash = "sha256-BTLrq/bitQFSVVVp0WyO3s8Qur80EksRhck3UzzaVa4=";
+      })
+    ];
+    sourceRoot = ".";
+    prePatch = ''
+      mv corba jaxp jaxws jdk langtools hotspot openjdk
+      mv openjdk icedtea
+      cd icedtea
+    '';
+    patches = [
+      ./patches/icedtea7.patch
+      ./patches/icedtea7-no-extract.patch
+      ./patches/icedtea-7-hotspot-pointer-comparison2.patch 
+      ./patches/icedtea-7-currency-10-years.patch
+      ./patches/icedtea-7-NativeCompileRules-fix-cflags.patch
+    ];
     postPatch = ''
-      substituteInPlace acinclude.m4 \
+      substituteInPlace $(grep -l -r 'attr/xattr[.]h') \
         --replace 'attr/xattr.h' 'sys/xattr.h'
       substituteInPlace Makefile.am \
         --replace '$(SYSTEM_JDK_DIR)/jre/lib/rt.jar' \
                   '${classpath-devel}/share/classpath/glibj.zip'
+      substituteInPlace \
+        openjdk/jdk/make/common/shared/Defs-utils.gmk \
+        openjdk/corba/make/common/shared/Defs-utils.gmk \
+        --replace /bin/echo echo
+      substituteInPlace $(grep -l -r 'sys/sysctl[.]h') \
+        --replace 'sys/sysctl.h' 'linux/sysctl.h'
     '';
     preConfigure = ''
       autoreconf -vfi
@@ -329,11 +389,28 @@ rec {
       # "--with-parallel-jobs=$NIX_BUILD_CORES" 
       "--disable-downloading"
       "--disable-tests"
-      # "--with-openjdk-src-dir=./openjdk.src"
       "--with-ecj=${ecj4-bootstrap}/bin/javac"
       "--with-jdk-home=${classpath-devel}"
       "--with-java=${jamvm-with-ecj4}/bin/jamvm"
       "--with-jar=${classpath-devel}/bin/gjar"
+    ];
+    makeFlags = [
+      "UTILS_COMMAND_PATH="
+      "UTILS_USR_BIN_PATH="
+      "USRBIN_PATH="
+      "REQUIRED_ALSA_VERSION="
+      "REQUIRED_FREETYPE_VERSION="
+      "DEVTOOLS_PATH="
+      "COMPILER_PATH="
+      "ALT_CUPS_HEADERS_PATH=${cups.dev}/include"
+      # They only check for linux up to 4.x
+      "DISABLE_HOTSPOT_OS_VERSION_CHECK=ok"
+      "SORT=sort"
+    ];
+    NIX_CFLAGS_COMPILE = [
+      # There are conflicting non extern variable declarations in headers all
+      # over the place, which breaks on recent gcc.
+      "-fcommon"
     ];
     nativeBuildInputs = [
       automake
@@ -369,9 +446,10 @@ rec {
       lcms2
       gtk2
       alsa-lib
+      cups
     ];
   };
-
-  
+  # TODO Missing jre/lib/currency.data
+  # TODO Missing jre/lib/amd64/jvm.cfg
 
 }

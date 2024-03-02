@@ -1,0 +1,246 @@
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1029,10 +1029,7 @@
+ 
+ # Download OpenJDK sources.
+ 
+-stamps/download.stamp: stamps/download-openjdk.stamp stamps/download-corba.stamp \
+- stamps/download-jaxp.stamp stamps/download-jaxws.stamp stamps/download-jdk.stamp \
+- stamps/download-cacao.stamp stamps/download-jamvm.stamp stamps/download-hotspot.stamp \
+- stamps/download-langtools.stamp
++stamps/download.stamp:
+ 	mkdir -p stamps
+ 	touch $@
+ 
+@@ -1042,176 +1039,26 @@
+ 	rm -f stamps/download.stamp
+ 
+ stamps/download-openjdk.stamp:
+-if OPENJDK_SRC_DIR_FOUND
+-else
+-if USE_HG
+-else
+-if USE_ALT_OPENJDK_SRC_ZIP
+-	ln -sf $(ALT_OPENJDK_SRC_ZIP) $(OPENJDK_SRC_ZIP)
+-endif
+-	if ! echo "$(OPENJDK_SUM)  $(OPENJDK_SRC_ZIP)" \
+-	  | $(OPENJDK_SHA256SUM_BIN) --check ; \
+-	then \
+-	  if test "x$(enable_downloading)" = "xyes"; then \
+-	    if [ -e $(OPENJDK_SRC_ZIP) ] ; then \
+-	      mv $(OPENJDK_SRC_ZIP) $(OPENJDK_SRC_ZIP).old ; \
+-	    fi ; \
+-	    $(WGET) $(ICEDTEA_URL)/$(OPENJDK_SRC_ZIP); \
+-	    if ! echo "$(OPENJDK_SUM)  $(OPENJDK_SRC_ZIP)" \
+-	      | $(SHA256SUM) --check ; then \
+-	      echo "ERROR: Bad download of OpenJDK root zip"; false; \
+-	    fi; \
+-	  else \
+-	    echo "ERROR: No up-to-date OpenJDK root zip available"; exit -1; \
+-	  fi ; \
+-	fi ;
+-endif
+-endif
+ 	mkdir -p stamps
+ 	touch $@
+ 
+ stamps/download-corba.stamp:
+-if OPENJDK_SRC_DIR_FOUND
+-else
+-if USE_HG
+-else
+-if USE_ALT_CORBA_SRC_ZIP
+-	ln -sf $(ALT_CORBA_SRC_ZIP) $(CORBA_SRC_ZIP)
+-endif
+-	if ! echo "$(CORBA_SUM)  $(CORBA_SRC_ZIP)" \
+-	  | $(CORBA_SHA256SUM_BIN) --check ; \
+-	then \
+-	  if test "x$(enable_downloading)" = "xyes"; then \
+-	    if [ $(CORBA_SRC_ZIP) ] ; then \
+-	      mv $(CORBA_SRC_ZIP) $(CORBA_SRC_ZIP).old ; \
+-	    fi ; \
+-	    $(WGET) $(ICEDTEA_URL)/$(CORBA_SRC_ZIP); \
+-	    if ! echo "$(CORBA_SUM)  $(CORBA_SRC_ZIP)" \
+-	      | $(SHA256SUM) --check ; then \
+-	      echo "ERROR: Bad download of CORBA zip"; false; \
+-	    fi; \
+-	  else \
+-	    echo "ERROR: No up-to-date OpenJDK CORBA zip available"; exit -1; \
+-	  fi ; \
+-	fi ;
+-endif
+-endif
+ 	mkdir -p stamps
+ 	touch $@
+ 
+ stamps/download-jaxp.stamp:
+-if OPENJDK_SRC_DIR_FOUND
+-else
+-if USE_HG
+-else
+-if USE_ALT_JAXP_SRC_ZIP
+-	ln -sf $(ALT_JAXP_SRC_ZIP) $(JAXP_SRC_ZIP)
+-endif
+-	if ! echo "$(JAXP_SUM)  $(JAXP_SRC_ZIP)" \
+-	  | $(JAXP_SHA256SUM_BIN) --check ; \
+-	then \
+-	  if test "x$(enable_downloading)" = "xyes"; then \
+-	    if [ $(JAXP_SRC_ZIP) ] ; then \
+-	      mv $(JAXP_SRC_ZIP) $(JAXP_SRC_ZIP).old ; \
+-	    fi ; \
+-	    $(WGET) $(ICEDTEA_URL)/$(JAXP_SRC_ZIP); \
+-	    if ! echo "$(JAXP_SUM)  $(JAXP_SRC_ZIP)" \
+-	      | $(SHA256SUM) --check ; then \
+-	      echo "ERROR: Bad download of JAXP zip"; false; \
+-	    fi; \
+-	  else \
+-	    echo "ERROR: No up-to-date JAXP root zip available"; exit -1; \
+-	  fi ; \
+-	fi ;
+-endif
+-endif
+ 	mkdir -p stamps
+ 	touch $@
+ 
+ stamps/download-jaxws.stamp:
+-if OPENJDK_SRC_DIR_FOUND
+-else
+-if USE_HG
+-else
+-if USE_ALT_JAXWS_SRC_ZIP
+-	ln -sf $(ALT_JAXWS_SRC_ZIP) $(JAXWS_SRC_ZIP)
+-endif
+-	if ! echo "$(JAXWS_SUM)  $(JAXWS_SRC_ZIP)" \
+-	  | $(JAXWS_SHA256SUM_BIN) --check ; \
+-	then \
+-	  if test "x$(enable_downloading)" = "xyes"; then \
+-	    if [ $(JAXWS_SRC_ZIP) ] ; then \
+-	      mv $(JAXWS_SRC_ZIP) $(JAXWS_SRC_ZIP).old ; \
+-	    fi ; \
+-	    $(WGET) $(ICEDTEA_URL)/$(JAXWS_SRC_ZIP); \
+-	    if ! echo "$(JAXWS_SUM)  $(JAXWS_SRC_ZIP)" \
+-	      | $(SHA256SUM) --check ; then \
+-	      echo "ERROR: Bad download of JAXWS zip"; false; \
+-	    fi; \
+-	  else \
+-	    echo "ERROR: No up-to-date OpenJDK JAXWS zip available"; exit -1; \
+-	  fi ; \
+-	fi ;
+-endif
+-endif
+ 	mkdir -p stamps
+ 	touch $@
+ 
+ stamps/download-jdk.stamp:
+-if OPENJDK_SRC_DIR_FOUND
+-else
+-if USE_HG
+-else
+-if USE_ALT_JDK_SRC_ZIP
+-	ln -sf $(ALT_JDK_SRC_ZIP) $(JDK_SRC_ZIP)
+-endif
+-	if ! echo "$(JDK_SUM)  $(JDK_SRC_ZIP)" \
+-	  | $(JDK_SHA256SUM_BIN) --check ; \
+-	then \
+-	  if test "x$(enable_downloading)" = "xyes"; then \
+-	    if [ $(JDK_SRC_ZIP) ] ; then \
+-	      mv $(JDK_SRC_ZIP) $(JDK_SRC_ZIP).old ; \
+-	    fi ; \
+-	    $(WGET) $(ICEDTEA_URL)/$(JDK_SRC_ZIP); \
+-	    if ! echo "$(JDK_SUM)  $(JDK_SRC_ZIP)" \
+-	      | $(SHA256SUM) --check ; then \
+-	      echo "ERROR: Bad download of JDK zip"; false; \
+-	    fi; \
+-	  else \
+-	    echo "ERROR: No up-to-date OpenJDK JDK zip available"; exit -1; \
+-	  fi ; \
+-	fi ;
+-endif
+-endif
+ 	mkdir -p stamps
+ 	touch $@
+ 
+ stamps/download-langtools.stamp:
+-if OPENJDK_SRC_DIR_FOUND
+-else
+-if USE_HG
+-else
+-if USE_ALT_LANGTOOLS_SRC_ZIP
+-	ln -sf $(ALT_LANGTOOLS_SRC_ZIP) $(LANGTOOLS_SRC_ZIP)
+-endif
+-	if ! echo "$(LANGTOOLS_SUM)  $(LANGTOOLS_SRC_ZIP)" \
+-	  | $(LANGTOOLS_SHA256SUM_BIN) --check ; \
+-	then \
+-	  if test "x$(enable_downloading)" = "xyes"; then \
+-	    if [ $(LANGTOOLS_SRC_ZIP) ] ; then \
+-	      mv $(LANGTOOLS_SRC_ZIP) $(LANGTOOLS_SRC_ZIP).old ; \
+-	    fi ; \
+-	    $(WGET) $(ICEDTEA_URL)/$(LANGTOOLS_SRC_ZIP); \
+-	    if ! echo "$(LANGTOOLS_SUM)  $(LANGTOOLS_SRC_ZIP)" \
+-	      | $(SHA256SUM) --check ; then \
+-	      echo "ERROR: Bad download of langtools zip"; false; \
+-	    fi; \
+-	  else \
+-	    echo "ERROR: No up-to-date OpenJDK langtools zip available"; exit -1; \
+-	  fi ; \
+-	fi ;
+-endif
+-endif
+ 	mkdir -p stamps
+ 	touch $@
+ 
+@@ -1315,40 +1162,6 @@
+ 	rm -f stamps/download-jamvm.stamp
+ 
+ stamps/download-hotspot.stamp:
+-if OPENJDK_SRC_DIR_FOUND
+-else
+-if USE_HG
+-else
+-if USE_ALT_HOTSPOT_SRC_ZIP
+-	ln -sf $(ALT_HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP)
+-endif
+-	echo "Using HotSpot build: ${HSBUILD}"
+-	if ! echo "$(HOTSPOT_SUM)  $(HOTSPOT_SRC_ZIP)" \
+-	  | $(HOTSPOT_SHA256SUM_BIN) --check ; \
+-	then \
+-	  if test "x$(enable_downloading)" = "xyes"; then \
+-	    if [ -e $(HOTSPOT_SRC_ZIP) ] ; then \
+-	      mv $(HOTSPOT_SRC_ZIP) $(HOTSPOT_SRC_ZIP).old ; \
+-	    fi ; \
+-	    if test "x$(HS_TYPE)" = "xhg"; then \
+-	      $(WGET) $(HS_URL)/archive/$(HS_CHANGESET).$(TAR_SUFFIX) -O $(HOTSPOT_SRC_ZIP) ; \
+-	    else \
+-		if test "x$(HSBUILD)" = "xdefault"; then \
+-	          $(WGET) $(HS_URL)/$(HOTSPOT_SRC_ZIP) ; \
+-		else \
+-		  $(WGET) $(HS_URL)/$(HSBUILD).$(TAR_SUFFIX) -O $(HOTSPOT_SRC_ZIP) ; \
+-		fi ; \
+-            fi ; \
+-	    if ! echo "$(HOTSPOT_SUM)  $(HOTSPOT_SRC_ZIP)" \
+-	      | $(SHA256SUM) --check ; then \
+-	      echo "ERROR: Bad download of HotSpot zip"; false; \
+-	    fi; \
+-	  else \
+-	    echo "ERROR: No up-to-date OpenJDK HotSpot zip available"; exit -1; \
+-	  fi ; \
+-	fi
+-endif
+-endif
+ 	mkdir -p stamps
+ 	touch $@
+ 
+@@ -1358,10 +1171,7 @@
+ 	fi
+ 	rm -f stamps/download-hotspot.stamp
+ 
+-stamps/extract.stamp: stamps/extract-openjdk.stamp stamps/extract-corba.stamp \
+- stamps/extract-jaxp.stamp stamps/extract-jaxws.stamp stamps/extract-jdk.stamp \
+- stamps/extract-cacao.stamp stamps/remove-intree-libraries.stamp stamps/extract-langtools.stamp \
+- stamps/extract-jamvm.stamp stamps/extract-hotspot.stamp stamps/sanitise-openjdk.stamp
++stamps/extract.stamp:
+ 	mkdir -p stamps
+ 	touch $@
+ 
+
+Diff finished.  Sat Mar  2 11:42:05 2024
