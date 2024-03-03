@@ -1,0 +1,15 @@
+Otherwise install phase fails because a directory is not created    
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -3256,9 +3256,6 @@
+ 	for files in $(BUILD_SDK_DIR)/jre/lib/ext/*.jar; do \
+ 	  $(call install_file,$${files},$(DESTDIR)${prefix}/jre/lib/ext,$(INSTALL_DATA));\
+ 	done
+-	for files in $(BUILD_SDK_DIR)/tapset/*.stp; do \
+-	  $(call install_file,$${files},$(DESTDIR)${prefix}/tapset,$(INSTALL_DATA));\
+-	done
+ 	$(abs_top_builddir)/pax-mark-vm $(DESTDIR)${prefix} false
+ 
+ install-data-local:
+
+Diff finished.  Sun Mar  3 17:24:25 2024
