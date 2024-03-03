@@ -452,5 +452,6 @@ rec {
   };
   # TODO Missing jre/lib/currency.data
   # TODO Missing jre/lib/amd64/jvm.cfg
+  # NOTE seems to work anyway
 
 }
