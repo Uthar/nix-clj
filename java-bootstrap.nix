@@ -360,6 +360,7 @@ rec {
       ./patches/icedtea-7-hotspot-pointer-comparison2.patch 
       ./patches/icedtea-7-currency-10-years.patch
       ./patches/icedtea-7-NativeCompileRules-fix-cflags.patch
+      ./patches/icedtea-7-dont-install-non-existent-dir.patch 
     ];
     postPatch = ''
       substituteInPlace $(grep -l -r 'attr/xattr[.]h') \
