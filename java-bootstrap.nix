@@ -453,10 +453,5 @@ rec {
   # TODO Missing jre/lib/currency.data
   # TODO Missing jre/lib/amd64/jvm.cfg
   # NOTE seems to work anyway
-
-  openjdk-8 = pkgs.openjdk8.override {
-    openjdk8-bootstrap = openjdk-7 // {
-      home = "${openjdk-7}";
-    };
-  };
+  
 }

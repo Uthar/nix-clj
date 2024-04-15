@@ -18,6 +18,9 @@
         };
         javaBootstrap = pkgs.callPackage ./java-bootstrap.nix {
         };
+        openjdk = pkgs.callPackage ./openjdk.nix {
+          openjdk-7 = javaBootstrap.openjdk-7;
+        };
       in {
 
         packages.mavenBootstrap = mavenBootstrap;
@@ -30,6 +33,8 @@
         packages.java = java;
 
         packages.javaBootstrap = javaBootstrap;
+
+        packages.openjdk = openjdk;
 
         packages.maven = pkgs.maven;
 
