@@ -1,28 +1,26 @@
 { stdenv, lib, pkgs, fetchurl, bash, cpio, pkgconfig, file, which, unzip, zip, cups, freetype
-, alsaLib, openjdk-bootstrap, cacert, perl, liberation_ttf, fontconfig, zlib, lndir
-, libX11, libICE, libXrender, libXext, libXt, libXtst, libXi, libXinerama, libXcursor
+, alsaLib, bootjdk, perl, liberation_ttf, fontconfig, zlib, lndir
+, libX11, libICE, libXrender, libXext, libXt, libXtst, libXi, libXinerama, libXcursor, libXrandr
 , libjpeg, giflib
 , gnumake42
 , setJavaClassPath
 , minimal ? false
-, enableGnome2 ? true, gtk2, gnome2, glib
+, enableGnome2 ? true, gtk3, glib, gnome2 
 }:
 
 let
 
-  bootjdk = openjdk-bootstrap;
-
   inherit (gnome2) gnome_vfs GConf;
 
-  openjdk9 = stdenv.mkDerivation rec {
+  openjdk10 = stdenv.mkDerivation rec {
     pname = "openjdk";
-    version = "9.0.4+12";
+    version = "10.0.2+13";
 
     src = pkgs.fetchFromGitHub {
       owner = "openjdk";
-      repo = "jdk9u";
+      repo = "jdk10u";
       rev = "jdk-${version}";
-      sha256 = "sha256-GJsNHF8QzwAjon6raImZQVDYsLOQP0EW/Zmv7l/fSYs=";
+      sha256 = "sha256-BsSTX7WkyVOX6OjO1WDI8RnH9j065nG8gC9Wlo6p9gY=";
     };
 
     outputs = [ "out" "jre" ];
@@ -31,18 +29,20 @@ let
     buildInputs = [
       cpio file which unzip zip perl bootjdk zlib cups freetype alsaLib
       libjpeg giflib libX11 libICE libXext libXrender libXtst libXt libXtst
-      libXi libXinerama libXcursor lndir fontconfig
+      libXi libXinerama libXcursor libXrandr lndir fontconfig
     ] ++ lib.optionals (!minimal && enableGnome2) [
-      gtk2 gnome_vfs glib GConf
+      gtk3 gnome_vfs GConf glib
     ];
 
     patches = [
-      ./fix-java-home-jdk9.patch
-      ./read-truststore-from-env-jdk9.patch
-      ./openjdk-9-pointer-comparison.patch
-      ./openjdk-currency-time-bomb.patch 
+      ./fix-java-home-jdk10.patch
+      ./read-truststore-from-env-jdk10.patch
+      ./openjdk-10-idlj-reproducibility.patch 
+      ./openjdk-10-pointer-comparison.patch 
+      ./openjdk-10-setsignalhandler.patch
+      ./openjdk-currency-time-bomb2.patch
     ] ++ lib.optionals (!minimal && enableGnome2) [
-      ./swing-use-gtk-jdk9.patch
+      ./swing-use-gtk-jdk10.patch
     ];
 
     preConfigure = ''
@@ -73,7 +73,7 @@ let
     NIX_LDFLAGS= lib.optionals (!minimal) [
       "-lfontconfig" "-lcups" "-lXinerama" "-lXrandr" "-lmagic"
     ] ++ lib.optionals (!minimal && enableGnome2) [
-      "-lgtk-x11-2.0" "-lgio-2.0" "-lgnomevfs-2" "-lgconf-2"
+      "-lgtk-3" "-lgio-2.0" "-lgnomevfs-2" "-lgconf-2"
     ];
 
     buildFlags = [ "images" ];
@@ -106,17 +106,11 @@ let
       rm -rf $out/lib/openjdk/demo
       ${lib.optionalString minimal ''
         for d in $out/lib/openjdk/lib $jre/lib/openjdk/jre/lib; do
-          rm ''${d}/{libjsound,libjsoundalsa,libawt*,libfontmanager}.so
+          rm ''${d}/{libjsound,libjsoundalsa,libfontmanager}.so
         done
       ''}
 
       lndir $jre/lib/openjdk/jre $out/lib/openjdk/jre
-
-      # Make sure cmm/*.pf are not symlinks:
-      # https://youtrack.jetbrains.com/issue/IDEA-147272
-      # in 9, it seems no *.pf files end up in $out ... ?
-      # rm -rf $out/lib/openjdk/jre/lib/cmm
-      # ln -s {$jre,$out}/lib/openjdk/jre/lib/cmm
 
       # Remove duplicate binaries.
       for i in $(cd $out/lib/openjdk/bin && echo *); do
@@ -126,24 +120,16 @@ let
         fi
       done
 
-      # Generate certificates.
-      (
-        cd $jre/lib/openjdk/jre/lib/security
-        rm cacerts
-        perl ${./generate-cacerts.pl} $jre/lib/openjdk/jre/bin/keytool ${cacert}/etc/ssl/certs/ca-bundle.crt
-      )
-
       ln -s $out/lib/openjdk/bin $out/bin
       ln -s $jre/lib/openjdk/jre/bin $jre/bin
       ln -s $jre/lib/openjdk/jre $out/jre
     '';
 
-    # FIXME: this is unnecessary once the multiple-outputs branch is merged.
     preFixup = ''
       # Set JAVA_HOME automatically.
       mkdir -p $out/nix-support
       cat <<EOF > $out/nix-support/setup-hook
-      if [ -z "\$\{JAVA_HOME-}" ]; then export JAVA_HOME=$out/lib/openjdk; fi
+      if [ -z "\$JAVA_HOME" ]; then export JAVA_HOME=$out/lib/openjdk; fi
       EOF
     '';
 
@@ -178,11 +164,11 @@ let
       license = licenses.gpl2;
       description = "The open-source Java Development Kit";
       maintainers = with maintainers; [ edwtjo ];
-      platforms = platforms.linux;
+      platforms = ["i686-linux" "x86_64-linux"];
     };
 
     passthru = {
-      home = "${openjdk9}/lib/openjdk";
+      home = "${openjdk10}/lib/openjdk";
     };
   };
-in openjdk9
+in openjdk10
