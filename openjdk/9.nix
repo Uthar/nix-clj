@@ -10,7 +10,7 @@
 
 let
 
-  bootjdk = openjdk-bootstrap;
+  openjdk-bootstrap' = openjdk-bootstrap;
 
   inherit (gnome2) gnome_vfs GConf;
 
@@ -29,7 +29,7 @@ let
 
     nativeBuildInputs = [ pkgconfig gnumake42 ];
     buildInputs = [
-      cpio file which unzip zip perl bootjdk zlib cups freetype alsaLib
+      cpio file which unzip zip perl openjdk-bootstrap' zlib cups freetype alsaLib
       libjpeg giflib libX11 libICE libXext libXrender libXtst libXt libXtst
       libXi libXinerama libXcursor lndir fontconfig
     ] ++ lib.optionals (!minimal && enableGnome2) [
@@ -50,7 +50,7 @@ let
       substituteInPlace configure --replace /bin/bash "${bash}/bin/bash"
 
       configureFlagsArray=(
-        "--with-boot-jdk=${bootjdk.home}"
+        "--with-boot-jdk=${openjdk-bootstrap'.home}"
         "--enable-unlimited-crypto"
         "--disable-debug-symbols"
         "--disable-freetype-bundling"
@@ -166,8 +166,8 @@ let
 
       # Test to make sure that we don't depend on the bootstrap
       for output in $outputs; do
-        if grep -q -r '${bootjdk}' $(eval echo \$$output); then
-          echo "Extraneous references to ${bootjdk} detected"
+        if grep -q -r '${openjdk-bootstrap'}' $(eval echo \$$output); then
+          echo "Extraneous references to ${openjdk-bootstrap'} detected"
           exit 1
         fi
       done
