@@ -449,6 +449,10 @@ rec {
       alsa-lib
       cups
     ];
+
+    passthru = {
+      home = "${openjdk-7}";
+    };
   };
   # TODO Missing jre/lib/currency.data
   # TODO Missing jre/lib/amd64/jvm.cfg
