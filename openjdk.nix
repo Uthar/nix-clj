@@ -14,7 +14,7 @@ rec {
   };
 
   openjdk-10 = pkgs.callPackage ./openjdk/10.nix {
-    bootjdk = openjdk-9;
+    openjdk-bootstrap = openjdk-9;
   };
 
   openjdk-11 = pkgs.callPackage ./openjdk/11.nix {
