@@ -12,8 +12,11 @@ let
 
   inherit (gnome2) gnome_vfs GConf;
 
+  # when building a headless jdk, also bootstrap it with a headless jdk
+  openjdk-bootstrap' = openjdk-bootstrap.override { inherit headless; };
+
   openjdk = stdenv.mkDerivation rec {
-    pname = "openjdk";
+    pname = "openjdk" + lib.optionalString headless "-headless";
     version = "11.0.24+3";
 
     src = fetchFromGitHub {
@@ -27,7 +30,7 @@ let
     buildInputs = [
       cpio file which zip perl zlib cups freetype harfbuzz alsa-lib libjpeg giflib
       libpng zlib lcms2 libX11 libICE libXrender libXext libXtst libXt libXtst
-      libXi libXinerama libXcursor libXrandr fontconfig openjdk-bootstrap
+      libXi libXinerama libXcursor libXrandr fontconfig openjdk-bootstrap'
     ] ++ lib.optionals (!headless && enableGnome2) [
       gtk3 gnome_vfs GConf glib
     ];
@@ -56,7 +59,7 @@ let
     '';
 
     configureFlags = [
-      "--with-boot-jdk=${openjdk-bootstrap.home}"
+      "--with-boot-jdk=${openjdk-bootstrap'.home}"
       "--enable-unlimited-crypto"
       "--with-native-debug-symbols=internal"
       "--with-freetype=system"
@@ -152,7 +155,7 @@ let
       done
     '';
 
-    disallowedReferences = [ openjdk-bootstrap ];
+    disallowedReferences = [ openjdk-bootstrap' ];
 
     passthru = {
       home = "${openjdk}/lib/openjdk";

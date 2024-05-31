@@ -194,7 +194,7 @@ let
       done
     '';
 
-    disallowedReferences = [ openjdk-bootstrap ];
+    disallowedReferences = [ openjdk-bootstrap' ];
 
     meta = with lib; {
       homepage = "http://openjdk.java.net/";
