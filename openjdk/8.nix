@@ -117,7 +117,7 @@ let
       # Remove crap from the installation.
       rm -rf $out/lib/openjdk/demo $out/lib/openjdk/sample
       ${lib.optionalString headless ''
-        rm $out/lib/openjdk/jre/lib/*/{libjsound,libjsoundalsa,libsplashscreen,libawt*,libfontmanager}.so
+        rm $out/lib/openjdk/jre/lib/*/{libjsound,libjsoundalsa,libsplashscreen,libfontmanager}.so
         rm $out/lib/openjdk/jre/bin/policytool
         rm $out/lib/openjdk/bin/{policytool,appletviewer}
       ''}
