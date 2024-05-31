@@ -107,7 +107,7 @@ let
       rm -rf $out/lib/openjdk/demo
       ${lib.optionalString headless ''
         for d in $out/lib/openjdk/lib $jre/lib/openjdk/jre/lib; do
-          rm ''${d}/{libjsound,libjsoundalsa,libawt*,libfontmanager}.so
+          rm ''${d}/{libjsound,libjsoundalsa,libfontmanager}.so
         done
       ''}
 
