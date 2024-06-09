@@ -25,7 +25,6 @@
 , nss
 , krb5
 , pcsclite
-# TODO strip out graphical stuff
 , xorg
 , libjpeg
 , libpng
@@ -63,7 +62,7 @@ rec {
     patches = [
       ./patches/classpath-miscompilation.patch
     ];
-    nativeBuildInputs = [
+    buildInputs = [
       jikes
       fastjar
     ];
@@ -112,10 +111,7 @@ rec {
       substituteInPlace build.xml \
         --replace 'depends="jars,test-jar"' 'depends="jars"'
     '';
-    # jikes needs to be in here, so that the below ANT_OPTS finds in in PATH -
-    # Otherwise a silent error occurs. Only through strace I found that it was
-    # running execve on a non existent executable.
-    nativeBuildInputs = [ jikes unzip zip ];
+    buildInputs = [ jikes unzip zip ];
     buildPhase = ''
       export JAVA_HOME=${jamvm-1}
       export JAVACMD=${jamvm-1}/bin/jamvm
@@ -160,7 +156,7 @@ rec {
       url = "mirror://gnu/classpath/classpath-${version}.tar.gz";
       hash = "sha256-nz+q6rqqAXzLoF0c6afZ7tNis8OFv8c9tWzixwgj/hg=";
     };
-    nativeBuildInputs = [
+    buildInputs = [
       ecj-bootstrap
       jamvm-1
       fastjar
@@ -168,8 +164,6 @@ rec {
     configureFlags = [
       "JAVAC=${ecj-bootstrap}/bin/javac"
       "JAVA=${jamvm-1}/bin/jamvm"
-      "GCJ_JAVAC_TRUE=no"
-      "ac_cv_prog_java_works=yes" # trust me
       "--disable-Werror"
       "--disable-gmp"
       "--disable-gtk-peer"
@@ -190,7 +184,7 @@ rec {
       rev = "e7c13ee0cf2005206fbec0eca677f8cf66d5a103";
       hash = "sha256-hEdXkMAcQDGK7uylusK48xk2Z1Ai6PFuFWJwbg7nWew=";
     };
-    nativeBuildInputs = [
+    buildInputs = [
       classpath099 # for javah
       ecj-bootstrap
       jamvm-1
@@ -203,8 +197,6 @@ rec {
     configureFlags = [
       "--with-javac=${ecj-bootstrap}/bin/javac"
       "JAVA=${jamvm-1}/bin/jamvm"
-      "GCJ_JAVAC_TRUE=no"
-      "ac_cv_prog_java_works=yes" # trust me
       "--disable-Werror"
       "--disable-gmp"
       "--disable-gtk-peer"
@@ -217,10 +209,6 @@ rec {
     ];
     postPatch = ''
       substituteInPlace $(grep -l -r '@Override') --replace @Override "" 
-    '';
-    # Not sure what this does.
-    postInstall = ''
-      make install-data
     '';
   };
 
@@ -245,7 +233,7 @@ rec {
     buildInputs = [ ecj-bootstrap zlib zip ];
   };
 
-  ecj-javac-wrapper-new-jamwm-2 = stdenv.mkDerivation rec {
+  ecj-bootstrap2 = stdenv.mkDerivation rec {
     pname = "ecj-javac-wrapper";
     version = "2";
     dontUnpack = true;
@@ -277,7 +265,7 @@ rec {
       rm org/eclipse/jdt/core/JDTCompilerAdapter.java
       rm -r org/eclipse/jdt/internal/antadapter
     '';
-    buildInputs = [ ecj-javac-wrapper-new-jamwm-2 classpath-devel makeWrapper ];
+    buildInputs = [ ecj-bootstrap2 classpath-devel makeWrapper ];
     buildPhase = ''
       javac -source 1.5 -target 1.5 -classpath ${jamvm}/lib/rt.jar:${ant-bootstrap}/lib/ant.jar $(find -name '*.java')
     '';
@@ -355,12 +343,12 @@ rec {
       cd icedtea
     '';
     patches = [
-      ./patches/icedtea7.patch
-      ./patches/icedtea7-no-extract.patch
-      ./patches/icedtea-7-hotspot-pointer-comparison2.patch 
-      ./patches/icedtea-7-currency-10-years.patch
-      ./patches/icedtea-7-NativeCompileRules-fix-cflags.patch
-      ./patches/icedtea-7-dont-install-non-existent-dir.patch 
+      ./patches/icedtea7-dont-check-for-wget.patch
+      ./patches/icedtea7-dont-extract.patch
+      ./patches/icedtea7-hotspot-pointer-comparison.patch 
+      ./patches/icedtea7-currency-time-bomb.patch
+      ./patches/icedtea7-NativeCompileRules-fix-cflags.patch
+      ./patches/icedtea7-dont-install-non-existent-dir.patch 
     ];
     postPatch = ''
       substituteInPlace $(grep -l -r 'attr/xattr[.]h') \
@@ -378,16 +366,13 @@ rec {
     preConfigure = ''
       autoreconf -vfi
     '';
-    # TODO a lot of this stuff seems unnecessary.
     configureFlags = [
       "--disable-system-sctp"
-      "--enable-system-pcsc" # Needed?
+      "--enable-system-pcsc"
       "--enable-system-lcms"
       "--enable-bootstrap"
       "--enable-nss"
       "--without-rhino"
-      "--disable-downloading"
-      # "--with-parallel-jobs=$NIX_BUILD_CORES" 
       "--disable-downloading"
       "--disable-tests"
       "--with-ecj=${ecj4-bootstrap}/bin/javac"
@@ -413,7 +398,7 @@ rec {
       # over the place, which breaks on recent gcc.
       "-fcommon"
     ];
-    nativeBuildInputs = [
+    buildInputs = [
       automake
       autoconf
       ant-bootstrap
@@ -421,7 +406,7 @@ rec {
       coreutils
       diffutils
       ecj4-bootstrap
-      fastjar #only for the configure phase; we actually use gjar
+      fastjar
       gawk
       gnugrep
       jamvm-with-ecj4
@@ -437,7 +422,6 @@ rec {
       zlib
       krb5
       pcsclite
-      # TODO strip out graphical stuff from the jdk
       xorg.libX11
       xorg.libXt
       xorg.libXtst
@@ -454,8 +438,5 @@ rec {
       home = "${openjdk-7}";
     };
   };
-  # TODO Missing jre/lib/currency.data
-  # TODO Missing jre/lib/amd64/jvm.cfg
-  # NOTE seems to work anyway
   
 }
