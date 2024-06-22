@@ -39,7 +39,7 @@ let
       ./read-truststore-from-env-jdk10.patch
       ./openjdk-currency-time-bomb2.patch
       ./increase-javadoc-heap-jdk13.patch
-      ./ignore-LegalNoticeFilePlugin-jdk17.patch
+      ./openjdk-jlink-plugin-warning.patch
       ./fix-library-path-jdk17.patch
 
       # -Wformat etc. are stricter in newer gccs, per

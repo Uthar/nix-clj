@@ -1,0 +1,11 @@
+--- a/src/jdk.jlink/share/classes/jdk/tools/jlink/internal/plugins/LegalNoticeFilePlugin.java
++++ b/src/jdk.jlink/share/classes/jdk/tools/jlink/internal/plugins/LegalNoticeFilePlugin.java
+@@ -120,7 +120,7 @@
+                            .findAny();
+ 
+                 if (ores.isPresent()) {
+-                    throw new PluginException(ores.get().path() + " " +
++                    System.err.println("note: " + ores.get().path() + " " +
+                         entry.path() + " contain different content");
+                 }
+             }
