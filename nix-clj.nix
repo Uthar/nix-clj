@@ -7,6 +7,7 @@ let
     ,version
     ,src
     ,path ? [ "src" ]
+    ,resources ? [ ]
     ,ns ? [ "${pname}.core" ]
     ,deps ? []
     ,patches ? []
@@ -67,6 +68,9 @@ let
     in ''
       mkdir classes
       addToSearchPath CLASSPATH classes
+      for p in ${toString resources}; do
+        cp --no-preserve=mode -r ${src'}/$p/* classes
+      done
       for p in ${toString path}; do
         addToSearchPath CLASSPATH ${src'}/$p
         find ${src'}/$p -name '*.java' >> sources.txt
