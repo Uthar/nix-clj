@@ -66,7 +66,7 @@ let
       mkdir classes
       export CLASSPATH=$CLASSPATH:${src'}/${path}:classes
       find -name '*.java' > sources.txt
-      javac -d classes @sources.txt || true
+      if test -s sources.txt; then javac -d classes @sources.txt; fi
       java clojure.main -e "(doseq [ns '(${toString ns})] (compile ns))"
     '';    
 
