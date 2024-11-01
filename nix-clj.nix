@@ -105,9 +105,10 @@ let
     installPhase = ''
       mkdir -p $out/share/java
       mkdir classes
-      jars=$(echo $CLASSPATH | sed 's,:, ,g')
-      for jar in $jars; do
-        (cd classes; jar -xf $jar)
+      for pkg in $propagatedBuildInputs; do
+        for jar in $pkg/share/java/*.jar; do
+          (cd classes; jar -xf $jar)
+        done
       done
       (cd classes; jar -cf $out/share/java/$name.jar *)
     '';
