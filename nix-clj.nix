@@ -81,7 +81,7 @@ let
 
     installPhase = ''
       mkdir -p $out/share/java
-      (cd classes; jar -cf $out/share/java/${pname}-${version}.jar *)
+      (cd classes; jar --create --date=1980-01-01T00:00:02Z -f $out/share/java/${pname}-${version}.jar *)
     '';
   } // args);
 
@@ -125,7 +125,7 @@ let
       unpack_jars $pkg
     done
 
-    (cd classes; $jdk/bin/jar -cf $out/share/java/$name.jar *)
+    (cd classes; $jdk/bin/jar --create --date=1980-01-01T00:00:02Z -f $out/share/java/$name.jar *)
   '';
 
 in clojure // {
