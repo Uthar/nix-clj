@@ -52,13 +52,13 @@ let
     #
     # Notes on the installPhase:
     #
-    # - my Clojure doesn't seem to use the precombiled
-    #   bytecodes. It insists on always loading the source files, even when the
-    #   bytecode exists alongside it on the filesystem. I deduce this from the
-    #   clojure.core/require calls being just as slow. I might be doing something
-    #   wrong here... didn't dig into it too much. But decided to just prune the
-    #   sources from the uberjar, leaving only the bytecode. This was immediately
-    #   visible by loading being an order of magnitude faster.
+    # - my Clojure doesn't seem to use the precompiled bytecode. It insists on
+    #   always loading the source files, even when the corresponding bytecode
+    #   exists on the filesystem. I deduce this from the clojure.core/require
+    #   calls being just as slow. I might be doing something wrong
+    #   here... didn't dig into it too much. But decided to just prune the
+    #   sources from the uberjar, leaving only the bytecode. This was
+    #   immediately visible by loading being an order of magnitude faster.
     # - Put the jar in $out/share/java for it to be found by nixpkgs setup hooks.
     
     buildPhase = let
