@@ -47,7 +47,7 @@ rec {
       rev = "v1.4.4";
       hash = "sha256-qshbYUqp3ENY9L+bDnssZgnyGLksRg64Gqr9WFTEp/8=";
     };
-    path = "src/cljc:src/java";
+    path = [ "src/cljc" "src/java" ];
     deps = [ macrovich ];
   };
 
@@ -72,7 +72,7 @@ rec {
       rev = version;
       hash = "sha256-86QCuNTm5i8odZZgiehzRnXtpC8lKcybgq+rMVw6DLU=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.tools.gitlibs" ];
   };
 
@@ -85,7 +85,7 @@ rec {
       rev = version;
       hash = "sha256-ocd5ACZXF3uqRn1RPN6rHD19unP3mTYyAIZC0jhD4gA=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.tools.cli" ];
   };
 
@@ -98,7 +98,7 @@ rec {
       rev = version;
       hash = "sha256-6vwtlT90GzEdnhhcdEJpBd0fJVL/2hx9+19VVY4OlO0=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.tools.logging" ];
   };
   
@@ -111,7 +111,7 @@ rec {
       rev = version;
       hash = "sha256-SICGhCl9bMIQ5b6GBlGpHvNLLdzSPNSUeOVrTwTAmGU=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [
       "clojure.tools.reader"
       "clojure.tools.reader.edn"
@@ -127,7 +127,7 @@ rec {
       rev = version;
       hash = "sha256-cAegZdNIQa43RZIoPTfRmUY64tpkUA6FmeOPrVbvj6U=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [
       "clojure.tools.analyzer"
       "clojure.tools.analyzer.ast"
@@ -152,7 +152,7 @@ rec {
       rev = version;
       hash = "sha256-ecWRFtfjn0mpIjsJEJ/iDuiQlXzJuQtaoSgYotx+e8U=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [
       "clojure.tools.analyzer.jvm"
       "clojure.tools.analyzer.passes.jvm.annotate-loops"
@@ -169,7 +169,7 @@ rec {
       rev = version;
       hash = "sha256-8Vh+L2BwABU9Gz34ySoGJ1IpIPfvoP1ZZdIllq2yDJ4=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.tools.deps.alpha" ];
     deps = jars ++ [
       dataXml
@@ -199,7 +199,7 @@ rec {
       rev = version;
       hash = "sha256-nuPBuNQ4su6IAh7rB9kX/Iwv5LsV+FOl/uHro6VcL7c=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.tools.build.api" ];
     deps = [ toolsDepsAlpha toolsNamespace ];
   };
@@ -213,7 +213,7 @@ rec {
       rev = version;
       hash = "sha256-vsUEFuXYrfhruhfEyBHQmYaEV1lSzjFzvdHizgp8IWw=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [
       "clojure.tools.namespace"
       "clojure.tools.namespace.dir"
@@ -234,7 +234,7 @@ rec {
       rev = version;
       hash = "sha256-fRBd4eSAcJWtbIWGb0EyXJTywbLOicnlkaSP3RqJ69Y=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.data.xml" ];
   };
 
@@ -247,7 +247,7 @@ rec {
       rev = version;
       hash = "sha256-JQsLDr028FLfpZvtts0d2oLlaFBYjUc8gTdnYXyEo/c=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.data.json" ];
   };
 
@@ -260,7 +260,7 @@ rec {
       rev = version;
       hash = "sha256-oE4f4xlp/Y+LfGVj92u5K9Dkm63JIB1zVXtQ8VJx1cQ=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.data.priority-map" ];
   };
   
@@ -286,7 +286,7 @@ rec {
       rev = version;
       hash = "sha256-1kY/aTli9CnyhXI0ZwT6wlLFfGRGayA/4QSK21sWjv8=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.core.async" ];
     deps = [ toolsAnalyzerJvm ];
   };
@@ -300,7 +300,7 @@ rec {
       rev = version;
       hash = "sha256-1ByBxHVTIqFHukEp9fk/eHQOWP3PP7KXaas5dzy9Ibc=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.core.cache" ];
     deps = [ dataPriorityMap ];
   };
@@ -314,7 +314,7 @@ rec {
       rev = version;
       hash = "sha256-XvkjzRKB/gAN2nXcq9IEF6cwtX9DNlZft6UZjzcsiG4=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.core.memoize" ];
     deps = [ coreCache dataPriorityMap ];
   };
@@ -335,7 +335,7 @@ rec {
       rev = "c93196693a1705421d88c30120fb773941414c90";
       hash = "sha256-kguqLNmxt1aZggExnIrkEbRpDtufjsMFalOnsB+rlzU=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.java.classpath" ];
   };
 
@@ -348,7 +348,7 @@ rec {
       rev = "v1.11.1.1200";
       hash = "sha256-a5ZhSDPnUgiPARhE8/Mn7yrH46gcv0rZTU0gVUCG0os=";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.run.exec" ];
     deps = [ toolsDepsAlpha ];
   };
@@ -362,7 +362,7 @@ rec {
       rev = "1.0.0";
       hash = "sha256-tCaLLVT7xtpxU8X+RzowoLsP8gp83XB8sVaFDwgO9OU=";
     };
-    path = "src/clojure:src/java";
+    path = [ "src/clojure" "src/java" ];
     ns = [ "nrepl.cmdline" ];
   };
 
@@ -404,7 +404,7 @@ rec {
       rev = "0.9.0";
       hash = "sha256-Tyt9G+vDx7yy390J8Zyh/RCTMMqGRALv61ItsPcUyBo";
     };
-    path = "cljfmt/src:cljfmt/resources";
+    path = [ "cljfmt/src" "cljfmt/resources" ];
     deps = [
       rewriteClj
       toolsCli
@@ -422,7 +422,7 @@ rec {
       rev = "core.rrb-vector-0.1.2";
       hash = "sha256-gZgApi7lqNL4q8+U494ko50+aUV7KZh0t1BWfK0k4rg";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.core.rrb-vector" ];
    };
 
@@ -464,7 +464,7 @@ rec {
       rev = "v0.11.0";
       hash = "sha256-M+ohYLYM8kc27csWg+yYqQO89F/xghA4vAEnKyMbMFY";
     };
-    path = "src:src-newer-jdks";
+    path = [ "src" "src-newer-jdks" ];
     ns = [
       "orchard.java"
       "orchard.apropos"
@@ -524,7 +524,7 @@ rec {
       rev = "0.4.0";
       hash = "sha256-27OzlcAb0msoflHPA0avEKYleebNt4OWnSeGS1AJSiY";
     };
-    path = "src/main";
+    path = [ "src/main" ];
     ns = [
       "suitable.middleware"
       "suitable.compliment.sources.cljs"
@@ -544,7 +544,7 @@ rec {
       rev = "tools.trace-0.7.11";
       hash = "sha256-l0IkmMvdTTWAPMkoe04jtv2ZWla/1EOB56Nztl2t1Qk";
     };
-    path = "src/main/clojure";
+    path = [ "src/main/clojure" ];
     ns = [ "clojure.tools.trace" ];
    };
    
@@ -557,8 +557,7 @@ rec {
       rev = "v0.28.7";
       hash = "sha256-4hAhBPBFbCRXzeJFVBy5wIIZqOSqtrMTdrrHVpJSW2I=";
     };
-    patches = [ ./nrepl-version.patch ./nrepl-content-types.patch ];
-    path = "src:resources";
+    path = [ "src" "resources" ];
     ns = [
       "cider.nrepl"
       "cider.nrepl.pprint"

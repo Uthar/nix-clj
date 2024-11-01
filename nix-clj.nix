@@ -6,7 +6,7 @@ let
     pname
     ,version
     ,src
-    ,path ? "src"
+    ,path ? [ "src" ]
     ,ns ? [ "${pname}.core" ]
     ,deps ? []
     ,patches ? []
@@ -14,6 +14,8 @@ let
   }@args : stdenvNoCC.mkDerivation (rec {
     
     inherit pname version;
+
+    dontUnpack = true;
 
     nativeBuildInputs = [ jdk clojure ];
     propagatedBuildInputs = [ jdk clojure ] ++ deps;
@@ -64,8 +66,11 @@ let
              else src;
     in ''
       mkdir classes
-      export CLASSPATH=$CLASSPATH:${src'}/${path}:classes
-      find -name '*.java' > sources.txt
+      addToSearchPath CLASSPATH classes
+      for p in ${toString path}; do
+        addToSearchPath CLASSPATH ${src'}/$p
+      done
+      find ${src'} -name '*.java' > sources.txt
       if test -s sources.txt; then javac -d classes @sources.txt; fi
       java -Dclojure.compile.path=classes clojure.lang.Compile ${toString ns}
     '';    
