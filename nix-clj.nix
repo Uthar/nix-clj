@@ -19,7 +19,7 @@ let
     dontUnpack = true;
 
     nativeBuildInputs = [ jdk clojure ];
-    propagatedBuildInputs = [ jdk clojure ] ++ deps;
+    propagatedBuildInputs = [ clojure ] ++ deps;
 
     # Clojure libraries seem to be usually built with deps.edn or Leiningen.
     #
