@@ -1,4 +1,4 @@
-{ stdenvNoCC, callPackage, makeBinaryWrapper, applyPatches, jdk, clojure, ...}:
+{ stdenvNoCC, runCommand, callPackage, makeBinaryWrapper, applyPatches, jdk, clojure, ...}:
 
 let
   
@@ -100,23 +100,33 @@ let
 
   packages = callPackage ./packages.nix { inherit buildClojureLibrary; };
 
-  buildUberjar = pname: cljpkgs: stdenvNoCC.mkDerivation {
-    inherit pname;
-    version = "uberjar";
-    propagatedBuildInputs = cljpkgs;
-    dontUnpack = true;
-    dontBuild = true;
-    installPhase = ''
-      mkdir -p $out/share/java
-      mkdir classes
-      for pkg in $propagatedBuildInputs; do
-        for jar in $pkg/share/java/*.jar; do
-          (cd classes; jar -xf $jar)
-        done
+  buildUberjar = name: cljpkgs: runCommand name { inherit jdk; } ''
+    mkdir -p $out/share/java
+    mkdir classes
+    declare -A jars
+
+    unpack_jars () {
+      for jar in $1/share/java/*.jar; do
+        (cd classes; $jdk/bin/jar -xf $jar)
       done
-      (cd classes; jar -cf $out/share/java/$name.jar *)
-    '';
-  };
+
+      local prop=$1/nix-support/propagated-build-inputs
+      if [ ! -f $prop ]; then return; fi
+
+      for pkg in $(cat $prop); do
+        if [ -z ''${jars[$pkg]} ]; then
+          jars[$pkg]=1
+          unpack_jars $pkg
+        fi
+      done
+    }
+
+    for pkg in ${toString cljpkgs}; do
+      unpack_jars $pkg
+    done
+
+    (cd classes; $jdk/bin/jar -cf $out/share/java/$name.jar *)
+  '';
 
 in clojure // {
   pkgs = packages;
