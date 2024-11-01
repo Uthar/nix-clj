@@ -69,8 +69,8 @@ let
       addToSearchPath CLASSPATH classes
       for p in ${toString path}; do
         addToSearchPath CLASSPATH ${src'}/$p
+        find ${src'}/$p -name '*.java' >> sources.txt
       done
-      find ${src'} -name '*.java' > sources.txt
       if test -s sources.txt; then javac -d classes @sources.txt; fi
       java -Dclojure.compile.path=classes clojure.lang.Compile ${toString ns}
     '';    
