@@ -557,7 +557,7 @@ rec {
       rev = "v0.28.7";
       hash = "sha256-4hAhBPBFbCRXzeJFVBy5wIIZqOSqtrMTdrrHVpJSW2I=";
     };
-    path = [ "src" "resources" ];
+    resources = [ "resources" ];
     ns = [
       "cider.nrepl"
       "cider.nrepl.pprint"
