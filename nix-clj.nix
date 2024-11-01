@@ -67,7 +67,7 @@ let
       export CLASSPATH=$CLASSPATH:${src'}/${path}:classes
       find -name '*.java' > sources.txt
       if test -s sources.txt; then javac -d classes @sources.txt; fi
-      java clojure.main -e "(doseq [ns '(${toString ns})] (compile ns))"
+      java -Dclojure.compile.path=classes clojure.lang.Compile ${toString ns}
     '';    
 
     installPhase = ''
