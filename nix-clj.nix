@@ -56,6 +56,13 @@ let
     #   wrong here... didn't dig into it too much. But decided to just prune the
     #   sources from the uberjar, leaving only the bytecode. This was immediately
     #   visible by loading being an order of magnitude faster.
+    #
+    #   NOTE: the above is because it only loads the class file when its last
+    #   modified timestamp is bigger than that of the corresponding source
+    #   file. It means I would have to set different timestamps for source files
+    #   than for class files in the jars. Or just patch that one line in
+    #   RT.java.
+    #
     # - Put the jar in $out/share/java for it to be found by nixpkgs setup hooks.
 
     # TODO maybe use clojure.lang.Compile
